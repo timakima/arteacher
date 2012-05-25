@@ -1,0 +1,50 @@
+AR Physics Teacher
+
+Copyright (C) 2012 University of Helsinki
+
+Introduction
+============
+
+AR Physics Teaches is an application prototype that demonstrates physics 
+experiments through augmented reality models and animations.
+
+Currently it contains a demo application for Boltzmann constant.
+One marker demonstrates a thermometer with display and blue gas animation,
+other marker a freezer and third one a stove. Placing thermometer near
+either of the other markers changes temperature and gas velocity.
+
+You can print the markers yourself. They are under /marker -directory.
+
+This software includes marker tracking parts of ARToolkit:
+http://www.hitl.washington.edu/artoolkit/
+
+Install
+=======
+
+Requirements for compiling the code are:
+* Qt >= 4.7.4
+* QtQuick3D (Tested with 2011-09-14)
+* OpenCV 2.x
+
+It's been running on W7, OS X and Linux, although W7 is the
+only supported platform. Linux seems to have by far the best
+performance...
+
+Known issues & TODO
+===================
+* QGLView renders on top of InfoWidget in Mac OS X
+* Build is a bit hacky (hardcoded paths for Windows)
+* Some widgets could be replaced by pure qss
+* UI auto-testing missing
+* Camera & graphics aren't really optimized at all (it works
+  well enough for current purpose)
+* Some hardcoded positioning for 3D models should be fixed
+
+Contact
+=======
+Any (constructive) feedback will be appreciated.
+
+Timo Makimattila <timo.makimattila@primoceler.com>
+
+The demo videos for this application are available from:
+http://www.youtube.com/user/timakimat/videos

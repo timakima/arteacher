@@ -1,0 +1,42 @@
+MainWindow {
+color: #AAAAAA;
+background-color: black;
+}
+
+MenuButton {
+font-size: 40pt;
+font-style: bold;
+color: red;
+border-style: outset;
+border-width: 2px;
+border-radius: 10%;
+border-color: #AAAAAA;
+background-color: black;
+margin: 10%;
+outline: none;
+}
+
+LanguageButton {
+border-radius: none;
+
+}
+
+ScreenWidget {
+background-color: black;
+}
+
+InfoWidget {
+background-color: #EEEEEE;
+
+}
+
+QLabel {
+color: white;
+background-color: black;
+}
+
+QLCDNumber {
+color: red;
+background-color: black;
+
+}
