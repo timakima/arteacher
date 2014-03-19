@@ -111,11 +111,11 @@ bool Controller::loadConfig() {
 
     bool ret;
     Model3D *fridge;
-    QString fridgeFile("models/fridge.3ds");
+    QString fridgeFile("models/blank.3ds"); //("models/fridge.3ds");
     QString fridgePat("markers/marker_a.pat");
 
     Model3D *stove;
-    QString stoveFile("models/stove.3ds");
+    QString stoveFile("models/blank.3ds"); //("models/stove.3ds");
     QString stovePat("markers/marker_b.pat");
 
     Model3D *thermo;

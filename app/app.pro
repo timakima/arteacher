@@ -19,7 +19,8 @@ linux* {
     message("Building for Linux")
     INCLUDEPATH += /usr/include/opencv
     LIBS += -L../artoolkit/ -lartoolkit
-    LIBS += -lcv -lhighgui -lcxcore -lcvaux
+    LIBS += -lopencv_core -lopencv_highgui -lopencv_imgproc
+    #LIBS += -lcv -lhighgui -lcxcore -lcvaux
 }
 
 # macports
@@ -96,5 +97,7 @@ HEADERS  += \
     languageselector.h
 
 FORMS    +=
+
+RESOURCES +=
 
 
