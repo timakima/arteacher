@@ -46,12 +46,8 @@
 
 ViewportWidget::ViewportWidget(QWidget *parent, ImageReader *reader) :
     QGLView(parent), _reader(reader), _frame(NULL), _scale(1.00),
-    _previousScale(1.00)
-  #ifndef Q_OS_LINUX
-    ,
+    _previousScale(1.00),
     _bgr(NULL)
-  #endif
-
 {
 
 }
@@ -76,9 +72,6 @@ void ViewportWidget::initializeGL(QGLPainter *painter) {
     painter->setClearColor(Qt::black);
 }
 
-
-/* TODO: hack */
-#ifndef Q_OS_LINUX
 void ViewportWidget::buildPane() {
 
 
@@ -108,7 +101,6 @@ void ViewportWidget::buildPane() {
     _texture = new QGLTexture2D();
     _texture->setImage(_bgrImage);
 }
-#endif
 
 
 void ViewportWidget::drawObject(Model3D *model, QGLPainter *painter) {
@@ -129,12 +121,15 @@ void ViewportWidget::drawObject(Model3D *model, QGLPainter *painter) {
 void ViewportWidget::drawVideoFrame(QGLPainter *painter) {
     /* Video background frame */
     if (_frame) {
-#ifdef Q_OS_LINUX
-        /* Computers with operating systems */
+
+        /* Following two lines just fill the fb with image. Which
+         * is much nicer than the pane version. Unfortunately, doesn't
+         * work in every OpenGL stack with Qt3D: Drawing a QGLSceneNode
+         * erases it. Left as a placeholder.
         glPixelZoom(_pixelRatio, _pixelRatio);
         glDrawPixels(_frame->width, _frame->height, GL_RGB, GL_UNSIGNED_BYTE,
                      _frame->imageData);
-#else
+        */
         if (!_bgr || !_bgrImage.bits()) {
             return;
         }
@@ -153,7 +148,6 @@ void ViewportWidget::drawVideoFrame(QGLPainter *painter) {
         painter->projectionMatrix().pop();
         painter->modelViewMatrix().pop();
         _texture->release();
-#endif
     }
 }
 
@@ -226,11 +220,10 @@ void ViewportWidget::resizeEvent(QResizeEvent *event) {
                       this->parentWidget()->height() / 2 - this->height() / 2,
                       this->width(), this->height());
 
-#ifdef Q_OS_LINUX
+    /* This if fb filling background draw is wanted instead of buildPane()
     _pixelRatio = (qreal)this->width() / (qreal)SCREEN_WIDTH;
-#else
+    */
     buildPane();
-#endif
 }
 
 

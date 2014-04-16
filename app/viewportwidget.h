@@ -33,9 +33,6 @@
 #include "model3d.h"
 
 /* Handles OpenGL drawing with Qt3D */
-/* With Linux uses glDrawPixels to draw video frame. With other OS:es
-  (Win7 & OS X) drawing a Qt3D object clears the buffer so did a hack to
-  draw the video as a texture mapping instead */
 class ViewportWidget : public QGLView
 {
     Q_OBJECT
@@ -61,10 +58,7 @@ protected:
 private:
     void drawObject(Model3D *model, QGLPainter *painter);
     void drawVideoFrame(QGLPainter *painter);
-
-#ifndef Q_OS_LINUX
     void buildPane();
-#endif
 
     ImageReader *_reader;
     IplImage *_frame;
@@ -82,12 +76,10 @@ private:
     QGLLightModel _lm;
     QGLLightParameters _lp;
 
-#ifndef Q_OS_LINUX
     QSizeF _paneAspect;
     QGLSceneNode *_bgr;
     QGLTexture2D *_texture;
     QImage _bgrImage;
-#endif
 };
 
 #endif // ViewportWidget_H
