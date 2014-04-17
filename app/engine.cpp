@@ -72,7 +72,8 @@ qreal Engine::tempInDistance(qreal radius, qreal distance,
 void Engine::updateTemp(bool coordinateFix) {
     qreal particleVel;
     QVector3D up(0.0f, 0.0f, -1.0f * 5.0f  );
-    QVector3D thermo(0.0f, 150.0f, 30.0f);
+    QVector3D thermo(0.0f, 90.0f, 30.0f);
+
     QMatrix4x4 fridgeMat = _fridge->transMat();
     QMatrix4x4 stoveMat = _stove->transMat();
     QMatrix4x4 tempMat = _thermo->transMat();
@@ -85,8 +86,6 @@ void Engine::updateTemp(bool coordinateFix) {
 
     qreal distToFridge = distance(tempMat, fridgeMat);
     qreal distToStove = distance(tempMat, stoveMat);
-
-    //qDebug() << "dt" << distToStove << "df" << distToFridge;
 
     qreal thermoTemp = _temp;
     thermoTemp =
@@ -114,6 +113,7 @@ void Engine::updateCoords() {
         _display->setVisible(_thermo->visible());
         _display->setTransMat(_thermo->transMat());
     }
+
 }
 
 void Engine::update(bool coordinateFix) {

@@ -73,9 +73,6 @@ void ViewportWidget::initializeGL(QGLPainter *painter) {
 }
 
 void ViewportWidget::buildPane() {
-
-
-    QMutexLocker lock(&_drawLock);
     QGLBuilder builder;
 
     if (_bgr) {
@@ -102,20 +99,6 @@ void ViewportWidget::buildPane() {
     _texture->setImage(_bgrImage);
 }
 
-
-void ViewportWidget::drawObject(Model3D *model, QGLPainter *painter) {
-
-
-    QMatrix4x4 trans = model->transMat();
-    //qDebug() << model->name() << trans;
-    painter->projectionMatrix().push();
-    painter->modelViewMatrix().push();
-    painter->modelViewMatrix() = trans;
-    painter->modelViewMatrix().scale(model->scale() * _scale);
-    model->draw(painter);
-    painter->modelViewMatrix().pop();
-    painter->projectionMatrix().pop();
-}
 
 
 void ViewportWidget::drawVideoFrame(QGLPainter *painter) {
@@ -153,9 +136,6 @@ void ViewportWidget::drawVideoFrame(QGLPainter *painter) {
 
 
 void ViewportWidget::paintGL(QGLPainter *painter) {
-
-
-    QMutexLocker lock(&_drawLock);
     glEnable(GL_BLEND);
     glEnable (GL_LINE_SMOOTH);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -168,9 +148,7 @@ void ViewportWidget::paintGL(QGLPainter *painter) {
     QListIterator<Model3D*> i(*_models);
     while(i.hasNext()) {
         Model3D *model = i.next();
-        if (model->visible()) {
-            drawObject(model, painter);
-        }
+        model->draw(painter);
     }
 
     glDisable(GL_DEPTH_TEST);
@@ -182,13 +160,9 @@ void ViewportWidget::paintGL(QGLPainter *painter) {
 /* Set background image and 3d models */
 void ViewportWidget::setStatus(IplImage *rgb, IplImage *gray,
                                QList<Model3D *> *models) {
-    {
-        QMutexLocker lock(&_drawLock);
-        _frame = rgb;
-        _models = models;
-
-    }
-
+    Q_UNUSED(gray);
+    _frame = rgb;
+    _models = models;
     updateGL();
 }
 

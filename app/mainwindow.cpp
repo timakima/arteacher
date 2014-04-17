@@ -45,6 +45,7 @@ MainWindow::MainWindow(QWidget *parent, ScreenWidget *screenWidget,
     _width(width),
     _height(height) {
     connect(_screenWidget, SIGNAL(hideSession()), this, SLOT(hideSession()));
+
     connect(_screenWidget, SIGNAL(clicked()), _infoWidget, SLOT(toggleShow()));
     this->showFullScreen();
 }
@@ -184,6 +185,7 @@ void MainWindow::hideSession() {
     this->showFullScreen();
     _screenWidget->hide();
 }
+
 
 void MainWindow::addMenuButton(QString &name, QString &background) {
     MenuButton *menuButton = new MenuButton(this);

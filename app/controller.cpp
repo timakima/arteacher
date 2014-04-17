@@ -56,27 +56,26 @@ Controller::~Controller() {
 }
 
 
-bool Controller::createModel(QString &modelFile,
-                             QString &patternFile,
-                             qreal angle,
+bool Controller::createModel(qreal angle,
                              QVector3D rot,
-                             Model3D **modelptr) {
-#ifndef Q_OS_LINUX
-     QGraphicsTranslation3D *fix = new QGraphicsTranslation3D();
-     fix->setTranslate(QVector3D(0.0f, 0.0f, 0.0f));
-#endif
+                             Model3D **modelptr,
+                             QString modelFile1, QString modelFile2,
+                             QString patternFile1, QString patternFile2) {
     bool ret;
     QMatrix4x4 trans;
     QString name;
 
-    name.append(modelFile);
-    name.append(patternFile);
+    name.append(modelFile1);
+    name.append(patternFile1);
 
     Model3D *model;
     model = new Model3D();
 
-    if (!model->loadModel(modelFile) ||
-            !model->setPattern(patternFile)) {
+    ret = model->addModel(modelFile1, patternFile1);
+    if (ret && modelFile2.size() > 0 && patternFile2.size() > 0) {
+        ret &= model->addModel(modelFile2, patternFile2);
+    }
+    if (!ret) {
         goto error;
     }
 
@@ -85,11 +84,8 @@ bool Controller::createModel(QString &modelFile,
     /* Rotation */
     trans.setToIdentity();
 
-#ifndef Q_OS_LINUX
-    //model->mainNode()->addTransform(fix);
-#endif
     trans.rotate(angle, rot);
-    model->mainNode()->setLocalTransform(trans);
+    model->setLocalTransform(trans);
 
     *modelptr = model;
 
@@ -108,19 +104,22 @@ bool Controller::loadConfig() {
     /* FIXME placeholder code for actual configure file loading */
     /* Leaks memory, but doesn't really matter since this will be
       changed anyway */
+    QMatrix4x4 trans;
 
     bool ret;
     Model3D *fridge;
-    QString fridgeFile("models/blank.3ds"); //("models/fridge.3ds");
-    QString fridgePat("markers/marker_a.pat");
+    QString fridgeFile("models/blank2.3ds"); //("models/fridge.3ds");
+    QString fridgePat1("markers/marker_a.pat");
+    QString fridgePat2("markers/marker_b.pat");
 
     Model3D *stove;
-    QString stoveFile("models/blank.3ds"); //("models/stove.3ds");
-    QString stovePat("markers/marker_b.pat");
+    QString stoveFile("models/blank2.3ds"); //("models/stove.3ds");
+    QString stovePat1("markers/marker_c.pat");
+    QString stovePat2("markers/marker_d.pat");
 
     Model3D *thermo;
     QString thermoFile("models/thermo.3ds");
-    QString thermoPat("markers/marker_c.pat");
+    QString thermoPat("markers/marker_e.pat");
 
     Model3D *balls;
     Model3D *display;
@@ -129,18 +128,14 @@ bool Controller::loadConfig() {
     QVariant *velLabelText;
     QString boltzmannScreen;
 
-    if (!createModel(fridgeFile,
-                     fridgePat,
-                    -90.0,
-                    QVector3D(1, 0, 0), &fridge) ||
-            !createModel(stoveFile,
-                         stovePat,
-                        -90.0,
-                        QVector3D(1, 0, 0), &stove) ||
-            !createModel(thermoFile,
-                         thermoPat,
+    if (!createModel(0.0,
+                    QVector3D(0, 0, 0), &fridge, fridgeFile, fridgeFile, fridgePat1, fridgePat2) ||
+            !createModel(
+                        0.0,
+                         QVector3D(0, 0, 0), &stove, stoveFile, stoveFile, stovePat1, stovePat2) ||
+            !createModel(
                         90.0,
-                        QVector3D(0, 0, 1), &thermo)) {
+                         QVector3D(0, 0, 1), &thermo, thermoFile, "", thermoPat, "")) {
 
         goto error;
     }
@@ -149,6 +144,23 @@ bool Controller::loadConfig() {
     balls->setTemp(25.0);
     stove->setTemp(100.0);
     fridge->setTemp(-20.0);
+    thermo->setModelVisible(true);
+
+    if (fridge->markerIds().size() >= 2) {
+        fridge->setMarkerPositionToModel(fridge->markerIds().at(0), -20, 55,-40);
+        fridge->setMarkerPositionToModel(fridge->markerIds().at(1), -10, 0, 100);
+    }
+
+    if (stove->markerIds().size() >= 2) {
+        stove->setMarkerPositionToModel(stove->markerIds().at(0), 60, 0, -20);
+        stove->setMarkerPositionToModel(stove->markerIds().at(1), -60, 0, -20);
+    }
+
+    trans.setToIdentity();
+    trans.translate(0, -1.0, 0);
+    trans.rotate(90, QVector3D(0,0,1));
+    thermo->setLocalTransform(trans);
+
     display = new ModelDisplay(thermo);
 
     _models.append(fridge);
@@ -197,6 +209,8 @@ void Controller::showImage() {
     detected = _detector->getMarker((uchar*)bgraImage->imageData, &_models);
     _engine->update();
     emit setStatus(rgbImage, bgraImage, &_models);
+    _timer->setSingleShot(true);
+    _timer->start(5);
 }
 
 bool Controller::initAR() {
@@ -207,8 +221,11 @@ bool Controller::initAR() {
     if (!loadConfig() || !_reader->initReader()) {
         goto error;
     }
+
+
     connect(_timer, SIGNAL(timeout()), this, SLOT(showImage()));
-    _timer->start(30);
+    _timer->setSingleShot(true);
+    _timer->start(1);
 
     ret = true;
     goto done;
@@ -240,5 +257,23 @@ void Controller::nextCamera() {
 void Controller::setLanguage(QLocale::Language language) {
     if (_languageSelector) {
         _languageSelector->setLanguage(language);
+    }
+}
+
+void Controller::toggleDebug()
+{
+    foreach(Model3D *model, _models) {
+        if (!model->name().contains("thermo")) {
+            model->setDebug(!model->debug());
+        }
+    }
+}
+
+void Controller::toggleModel()
+{
+    foreach(Model3D *model, _models) {
+        if (!model->name().contains("thermo")) {
+            model->setModelVisible(!model->modelVisible());
+        }
     }
 }

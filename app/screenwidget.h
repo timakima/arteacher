@@ -40,6 +40,8 @@ protected:
     void mousePressEvent(QMouseEvent *event);
 signals:
     void hideSession();
+    void toggleDebug();
+    void toggleModel();
     void clicked();
 
 public slots:

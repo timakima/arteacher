@@ -38,7 +38,8 @@ public:
     void buildPane();
     virtual QGLSceneNode *mainNode();
     virtual void draw(QGLPainter *painter);
-
+    virtual bool visible(int markerId = -1);
+    virtual QMatrix4x4 transMat();
 
 signals:
     
@@ -55,7 +56,7 @@ private:
 
     QImage _displayValue;
     QGLTexture2D *_texture;
-
+    bool _parentVisible;
     
 };
 

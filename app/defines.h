@@ -37,14 +37,14 @@
 #define ARTK_DEFAULT_PATTERN  "patt.hiro"
 #define ARTK_DEFAULT_CAMERA "logitech_c615.dat"
 #define ARTK_MARKER_WIDTH 34.0
-#define ARTK_CONFIDENCE 0.5
+#define ARTK_CONFIDENCE 0.4
 #define ARTK_THRESHOLD 100
 
 #define GL_DEFAULT_SCALE 14.0
 
 #define UI_BUTTONS_IN_ROW 3
 
-#define ANIMATION_BALLS 50
+#define ANIMATION_BALLS 100
 
 #define MIN_TEMP (-20.0)
 #define MAX_TEMP 100.0

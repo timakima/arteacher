@@ -38,8 +38,18 @@ ScreenWidget::ScreenWidget(QWidget *parent) :
 void ScreenWidget::keyPressEvent(QKeyEvent *event) {
     int key;
     key = event->key();
-    if (key == Qt::Key_Escape) {
+    switch(key) {
+    case Qt::Key_Escape:
         emit hideSession();
+        break;
+    case Qt::Key_D:
+        emit toggleDebug();
+        break;
+    case Qt::Key_M:
+        emit toggleModel();
+        break;
+    default:
+    break;
     }
 }
 

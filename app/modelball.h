@@ -48,20 +48,20 @@ public:
                         const char *slot);
     virtual void startAnimation();
     virtual QGLSceneNode *mainNode();
-    double randomPosition();
+    double randomPosition(int seed = -1);
     qreal tempScale();
     virtual void draw(QGLPainter *painter);
 
 
+    virtual bool visible(int markerId = -1);
+    virtual QMatrix4x4 transMat();
 protected:
 
 signals:
     
 public slots:
     virtual void animateBall(int feed);
-    virtual void rotateSceneX(int angle);
-    virtual void rotateSceneY(int angle);
-    virtual void rotateSceneZ(int angle);
+    virtual void setTemp(qreal temp);
 
 
 private:
@@ -75,6 +75,8 @@ private:
     int _xAngle;
     int _yAngle;
     int _zAngle;
+
+    QTimeLine *_timeLine;
 };
 
 #endif // MODELBALL_H

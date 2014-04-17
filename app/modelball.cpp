@@ -23,6 +23,7 @@
 ****************************************************************************/
 
 #include <Qt3D/qglsphere.h>
+#include <qglpainter.h>
 #include <qmath.h>
 #include <QDateTime>
 #include <QTimeLine>
@@ -33,13 +34,19 @@
 #define SPECULAR_COLOR 160, 128, 160
 #define AMBIENT_COLOR 30, 0, 40
 #define EMITTED_LIGHT_COLOR 5, 5, 20
-#define SHININESS 90
+#define SHININESS 99
 
 ModelBall::ModelBall(QObject *parent) :
-    Model3D(parent)
+    Model3D(parent), _timeLine(0)
 {
-    _scale = 4.0;
+    _scale = 2.0;
     createScene();
+    _timeLine = new QTimeLine();
+    connect(_timeLine, SIGNAL(frameChanged(int)),
+            this, SLOT(animateBall(int)));
+    _timeLine->start();
+
+
     startAnimation();
 }
 
@@ -53,8 +60,16 @@ qreal ModelBall::tempScale() {
 }
 
 /* Give a random position inside given scale */
-double ModelBall::randomPosition() {
-    return ((((double)qrand() * 2 - RAND_MAX))  / RAND_MAX);
+double ModelBall::randomPosition(int seed) {
+    double rand;
+    if (seed =! -1) {
+        srand(seed);
+    }
+    rand = qrand();
+
+    rand -= RAND_MAX/2;
+    rand /= RAND_MAX;
+    return rand;
 }
 
 
@@ -100,7 +115,7 @@ void ModelBall::createScene() {
     Model3D *parent = (Model3D*)this->parent();
     if (parent) {
         _trans.setTranslate(QVector3D(-0.3 * parent->scale() / 10,
-                                      parent->scale() * 1.1, 0.0f));
+                                      parent->scale() * 1.2, 0.0f));
     }
     _mainNode->addTransform(&_rot);
     _mainNode->addTransform(&_trans);
@@ -112,7 +127,17 @@ QGLSceneNode *ModelBall::mainNode() {
 }
 
 void ModelBall::draw(QGLPainter *painter) {
+    if (!visible()) {
+        return;
+    }
+
+    painter->projectionMatrix().push();
+    painter->modelViewMatrix().push();
+    painter->modelViewMatrix() = transMat();
+    painter->modelViewMatrix().scale(scale());
     _mainNode->draw(painter);
+    painter->modelViewMatrix().pop();
+    painter->projectionMatrix().pop();
 }
 
 
@@ -122,39 +147,35 @@ QTimeLine *ModelBall::createTimeLine(int duration, int minFrame,
                                 int updateInterval,
                                 QTimeLine::CurveShape shape,
                                 const char *slot) {
-    QTimeLine *timeLine = new QTimeLine(duration, this);
-    timeLine->setFrameRange(minFrame, maxFrame);
-    timeLine->setLoopCount(0);
-    timeLine->setUpdateInterval(updateInterval);
-    timeLine->setCurveShape(shape);
-    connect(timeLine, SIGNAL(frameChanged(int)),
-            this, slot);
-    timeLine->start();
-    return timeLine;
+    _timeLine->setDuration(duration);
+    _timeLine->setFrameRange(minFrame, maxFrame);
+    _timeLine->setLoopCount(0);
+    _timeLine->setUpdateInterval(updateInterval);
+    _timeLine->setCurveShape(shape);
+    return _timeLine;
 }
 
 /* Creates and starts animations for the scene and balls */
 void ModelBall::startAnimation() {
+    qDebug() << Q_FUNC_INFO;
 
-    createTimeLine(1000, 0, 100, 10, QTimeLine::EaseInOutCurve,
-                   SLOT(animateBall(int)));
-    createTimeLine(5000, 0, 100, 10, QTimeLine::SineCurve,
-                   SLOT(animateBall(int)));
-    createTimeLine(3000, 1, 360, 10, QTimeLine::LinearCurve,
-                   SLOT(rotateSceneX(int)));
-    createTimeLine(3000, 1, 360, 10, QTimeLine::LinearCurve,
-                   SLOT(rotateSceneY(int)));
-    createTimeLine(3000, 1, 360, 10, QTimeLine::LinearCurve,
-                   SLOT(rotateSceneZ(int)));
-
+    _timeLine->setDuration(10000);
+    _timeLine->setFrameRange(0, 10000);
+    _timeLine->setLoopCount(0);
+    qDebug() << _tempScale;
+    _timeLine->setUpdateInterval(_tempScale * 10);
+    _timeLine->setCurveShape(QTimeLine::EaseInOutCurve);
 }
 
 /* Animates the scene and balls */
 void ModelBall::animateBall(int feed) {
-    /* Scalle according to temperature */
+
+
+    /* Scale according to temperature */
     _tempScale = tempScale() * 3.0 + 0.1;
 
     /* Rotate scene */
+
     _rot.setAxis(QVector3D(1, 0, 0));
     _rot.setAngle(_xAngle);
     _rot.setAxis(QVector3D(0, 1, 0));
@@ -163,45 +184,53 @@ void ModelBall::animateBall(int feed) {
     _rot.setAngle(_zAngle);
 
     /* This is basicly nonsense that randomizes individual ball movement */
-    int diff;
-    qreal trval;
     qreal x;
     qreal y;
     qreal z;
     int i = 0;
     QListIterator<QGraphicsTranslation3D*> balls(_translations);
     while (balls.hasNext()) {
-        diff = feed + _transTable[i];
-        diff %= 199;
-        diff -= 100;
-        trval = ((qreal)diff / 100.0);
-        x = trval + randomPosition() / 10.0;
-        y = trval + randomPosition() / 10.0;
-        z = trval + randomPosition() / 10.0;
+        x = randomPosition();
+        y = randomPosition();
+        z = randomPosition();
 
         QGraphicsTranslation3D *trans = balls.next();
-        QVector3D ovec = trans->translate().normalized();
         QVector3D trvec(x,
                         y,
                         z);
-        trvec *= ovec;
         trvec *= _tempScale * 10.0;
         trans->setTranslate(trvec);
         i++;
     }
 }
 
-void ModelBall::rotateSceneX(int angle) {
-    Q_UNUSED(angle);
-    _xAngle += 10 * _tempScale;
+void ModelBall::setTemp(qreal temp)
+{
+    if (qAbs(temp - _temp) > 5) {
+        Model3D::setTemp(temp);
+        startAnimation();
+
+    }
+
 }
 
-void ModelBall::rotateSceneY(int angle) {
-    Q_UNUSED(angle);
-    _yAngle += 10 * _tempScale;
+bool ModelBall::visible(int markerId) {
+    Q_UNUSED(markerId);
+    Model3D *thermo = qobject_cast<Model3D*>(parent());
+    if (thermo) {
+        return thermo->visible();
+    } else {
+        return false;
+    }
+
 }
 
-void ModelBall::rotateSceneZ(int angle) {
-    Q_UNUSED(angle);
-    _zAngle += 10 *_tempScale;
+QMatrix4x4 ModelBall::transMat()
+{
+    Model3D *thermo = qobject_cast<Model3D*>(parent());
+    if (thermo) {
+        return thermo->transMat();
+    } else {
+        return QMatrix4x4();
+    }
 }

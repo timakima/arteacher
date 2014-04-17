@@ -32,7 +32,7 @@
 
 
 ModelDisplay::ModelDisplay(QObject *parent) :
-    Model3D(parent), _displayValue(QImage(200, 100, QImage::Format_ARGB32))
+    Model3D(parent), _displayValue(QImage(200, 100, QImage::Format_ARGB32)), _parentVisible(false)
 {
     buildPane();
 }
@@ -43,7 +43,7 @@ void ModelDisplay::buildPane() {
     QGLBuilder builder;
 
     QGraphicsTranslation3D *trans = new QGraphicsTranslation3D();
-    trans->setTranslate(QVector3D(-0.125f, 1.5f, -0.12f));
+    trans->setTranslate(QVector3D(-0.125f, 0.5f, -0.12f));
 
     builder.newSection();
     builder.addPane(QSizeF(0.9f, 0.75f));
@@ -78,9 +78,43 @@ void ModelDisplay::setTemp(qreal temp) {
 
 
 void ModelDisplay::draw(QGLPainter *painter) {
+    if (!visible()) {
+        return;
+    }
+
+    painter->projectionMatrix().push();
+    painter->modelViewMatrix().push();
+    painter->modelViewMatrix() = transMat();
+    painter->modelViewMatrix().scale(scale());
+
     painter->setStandardEffect(QGL::LitDecalTexture2D);
     _texture->setImage(_displayValue);
     _texture->bind();
     _mainNode->draw(painter);
     _texture->release();
+    painter->modelViewMatrix().pop();
+    painter->projectionMatrix().pop();
+
+}
+
+
+bool ModelDisplay::visible(int markerId) {
+    Q_UNUSED(markerId);
+    Model3D *thermo = qobject_cast<Model3D*>(parent());
+    if (thermo) {
+        return thermo->visible();
+    } else {
+        return false;
+    }
+
+}
+
+QMatrix4x4 ModelDisplay::transMat()
+{
+    Model3D *thermo = qobject_cast<Model3D*>(parent());
+    if (thermo) {
+        return thermo->transMat();
+    } else {
+        return QMatrix4x4();
+    }
 }

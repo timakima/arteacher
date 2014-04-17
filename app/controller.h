@@ -46,11 +46,11 @@ public:
                         LanguageSelector *languageSelector = 0);
     ~Controller();
     /* Creates 3D model and maps it to ARToolkit pattern */
-    bool createModel(QString &modelFile,
-                     QString &patternFile,
-                     qreal angle,
+    bool createModel(qreal angle,
                      QVector3D rot,
-                     Model3D **model);
+                     Model3D **model,
+                     QString modelFile1, QString modelFile2,
+                     QString patternFile1, QString patternFile2);
 
     void setTranslator(QTranslator *translator);
 
@@ -86,6 +86,9 @@ public slots:
 
     /* Sets application language */
     void setLanguage(QLocale::Language language);
+
+    void toggleDebug();
+    void toggleModel();
 
 private:
     LanguageSelector *_languageSelector;

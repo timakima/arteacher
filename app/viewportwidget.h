@@ -27,7 +27,6 @@
 
 #include <Qt3D/qglview.h>
 #include <Qt3D/qglpixelbuffersurface.h>
-#include <QMutex>
 #include <QtOpenGL/QGLFramebufferObject>
 #include "imagereader.h"
 #include "model3d.h"
@@ -56,7 +55,6 @@ protected:
     void resizeEvent(QResizeEvent *event);
 
 private:
-    void drawObject(Model3D *model, QGLPainter *painter);
     void drawVideoFrame(QGLPainter *painter);
     void buildPane();
 
@@ -71,7 +69,6 @@ private:
     double _drawAreaHeight;
 
     QList<Model3D*> *_models;
-    QMutex _drawLock;
 
     QGLLightModel _lm;
     QGLLightParameters _lp;

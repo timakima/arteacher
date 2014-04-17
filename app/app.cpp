@@ -57,6 +57,8 @@ App::App(QObject *parent) :
     _viewportWidget->setObjectName(QString("ViewportWidget"));
     _infoWidget->setObjectName(QString("InfoWidget"));
     _mw->setObjectName(QString("MainWindow"));
+    connect(_screenWidget, SIGNAL(toggleDebug()), _controller, SLOT(toggleDebug()));
+    connect(_screenWidget, SIGNAL(toggleModel()), _controller, SLOT(toggleModel()));
 
 }
 

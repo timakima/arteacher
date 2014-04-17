@@ -51,13 +51,14 @@ public:
     explicit Model3D(QObject *parent = 0);
 
     /* Loads 3ds object */
-    virtual bool loadModel(QString &fileName);
+    virtual bool addModel(QString fileName, QString pattern);
     /* Sets the name of the object */
     virtual void setName(QString &name);
-    /* Loads artoolkit pattern and id */
-    virtual bool setPattern(QString &pattern);
+
+    virtual void setLocalTransform(QMatrix4x4 trans);
+
     /* Sets the visibility */
-    virtual void setVisible(bool visible);
+    virtual void setVisible(bool visible, int markerId = -1);
     /* Sets object temperature */
     virtual void setTemp(qreal temp);
 
@@ -65,25 +66,33 @@ public:
     /* Object scale */
     virtual void setScale(qreal scale);
     /* Updates model position & rotation */
-    virtual void updateTransMat(double trans[3][4]);
+    virtual void updateTransMat(double trans[3][4], int markerId = -1);
     /* For testing purposes */
-    virtual void setTransMat(QMatrix4x4 &mat);
+    virtual void setTransMat(QMatrix4x4 mat);
     /* Converts artoolkit translation matrix to Qt3D */
     virtual void convertMat(double trans[3][4], double oglMat[16]);
 
-    virtual QString &name();
-    virtual QString &pattern();
-    virtual int id();
-    virtual bool visible();
-    virtual qreal temp();
-    virtual bool coordPtr(coordinates_t **coordinates);
-    virtual QMatrix4x4& transMat();
-    virtual QGLAbstractScene *scene();
-    virtual qreal scale();
-    virtual QGLSceneNode *mainNode();
+    virtual QString name();
+    virtual QList<int> markerIds();
 
+    virtual bool visible(int markerId = -1);
+
+    virtual qreal temp();
+    virtual coordinates_t *coordPtr(int markerId = -1);
+
+    virtual QMatrix4x4 transMat();
+    virtual qreal scale();
+    virtual QGLSceneNode *mainNode(int markerId = -1);
     virtual void draw(QGLPainter *painter);
 
+    virtual QMatrix4x4 calcModelPosition();
+    void drawDebug(QGLPainter *painter);
+    bool setMarkerPositionToModel(int markerId, float x, float y, float z);
+    bool markerPositionToModel(int markerId, float &x, float &y, float &z);
+    void setModelVisible(bool on);
+    bool modelVisible();
+    void setDebug(bool on);
+    bool debug();
 public slots:
     virtual void animate();
 
@@ -91,17 +100,39 @@ signals:
     void coordsUpdated();
 
 protected:
+    /* Object center */
     QMatrix4x4 _transMat;
+
+    /* Translations for markers */
+    QHash<int, QMatrix4x4> _markerTransMats;
+
     double _scale;
     qreal _temp;
 
 private:
+
+    bool loadModelFile(QString fileName, QGLAbstractScene *&scene);
+    bool setPatternFile(QString pattern, int &id);
+    void drawObject(QGLPainter *painter, int markerId = -1);
+
     QString _name;
-    QString _pattern;
-    int _id;
-    bool _visible;
-    coordinates_t _coordinates;
-    QGLAbstractScene *_scene;
+
+    QList<int> _markerIds;
+    QHash<int, bool> _visible;
+    QHash<int, coordinates_t*> _coords;
+    QHash<int, QGLAbstractScene*> _scenes;
+    QHash<int, QVector3D> _markerToModelFix;
+
+    QGLSceneNode *_mainNode;
+    QGLMaterial *_debugMaterial;
+    QGLSceneNode *_debugNode;
+
+    QGLMaterial *_debugMarkerMaterial;
+    QGLSceneNode *_debugMarkerNode;
+
+
+    bool _debug;
+    bool _showModel;
 };
 
 #endif // MODEL3D_H

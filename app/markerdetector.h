@@ -52,6 +52,8 @@ public:
     int getMarker(uchar *image, QList<Model3D *> *models);
 
 private:
+    int findBestMatchId(ARMarkerInfo *markerInfo, int markerId, int markerNum);
+
     int _threshold;
 
 
