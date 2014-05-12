@@ -27,6 +27,7 @@
 #include <qmath.h>
 #include <QDateTime>
 #include <QTimeLine>
+#include <QTimer>
 #include "defines.h"
 #include "modelball.h"
 
@@ -37,17 +38,15 @@
 #define SHININESS 99
 
 ModelBall::ModelBall(QObject *parent) :
-    Model3D(parent), _timeLine(0)
+    Model3D(parent), _animationTimer(new QTimer(this))
 {
     _scale = 2.0;
     createScene();
-    _timeLine = new QTimeLine();
-    connect(_timeLine, SIGNAL(frameChanged(int)),
-            this, SLOT(animateBall(int)));
-    _timeLine->start();
 
-
-    startAnimation();
+    _animationTimer->setInterval(10);
+    _animationTimer->setSingleShot(true);
+    connect(_animationTimer, SIGNAL(timeout()),
+            this, SLOT(animate()));
 }
 
 
@@ -62,7 +61,7 @@ qreal ModelBall::tempScale() {
 /* Give a random position inside given scale */
 double ModelBall::randomPosition(int seed) {
     double rand;
-    if (seed =! -1) {
+    if (seed != -1) {
         srand(seed);
     }
     rand = qrand();
@@ -141,47 +140,12 @@ void ModelBall::draw(QGLPainter *painter) {
 }
 
 
-/* Creates a timeline for animation */
-QTimeLine *ModelBall::createTimeLine(int duration, int minFrame,
-                                int maxFrame,
-                                int updateInterval,
-                                QTimeLine::CurveShape shape,
-                                const char *slot) {
-    _timeLine->setDuration(duration);
-    _timeLine->setFrameRange(minFrame, maxFrame);
-    _timeLine->setLoopCount(0);
-    _timeLine->setUpdateInterval(updateInterval);
-    _timeLine->setCurveShape(shape);
-    return _timeLine;
-}
-
-/* Creates and starts animations for the scene and balls */
-void ModelBall::startAnimation() {
-    qDebug() << Q_FUNC_INFO;
-
-    _timeLine->setDuration(10000);
-    _timeLine->setFrameRange(0, 10000);
-    _timeLine->setLoopCount(0);
-    qDebug() << _tempScale;
-    _timeLine->setUpdateInterval(_tempScale * 10);
-    _timeLine->setCurveShape(QTimeLine::EaseInOutCurve);
-}
-
 /* Animates the scene and balls */
-void ModelBall::animateBall(int feed) {
+void ModelBall::animate() {
 
-
+    qDebug() << Q_FUNC_INFO;
     /* Scale according to temperature */
     _tempScale = tempScale() * 3.0 + 0.1;
-
-    /* Rotate scene */
-
-    _rot.setAxis(QVector3D(1, 0, 0));
-    _rot.setAngle(_xAngle);
-    _rot.setAxis(QVector3D(0, 1, 0));
-    _rot.setAngle(_yAngle);
-    _rot.setAxis(QVector3D(0, 0, 1));
-    _rot.setAngle(_zAngle);
 
     /* This is basicly nonsense that randomizes individual ball movement */
     qreal x;
@@ -198,20 +162,24 @@ void ModelBall::animateBall(int feed) {
         QVector3D trvec(x,
                         y,
                         z);
-        trvec *= _tempScale * 10.0;
+        trvec *= _tempScale * 3.0 + 10; // Linear scaling according to temp
         trans->setTranslate(trvec);
         i++;
     }
+
+    // Ball movement is not linear, but makes the point better when
+    // there's a huge velocity difference between room-, fridge- and stove temps
+    int interval = qSqrt(MAX_TEMP - _temp) * 5;
+    _animationTimer->setInterval(interval);
+    _animationTimer->start();
 }
 
 void ModelBall::setTemp(qreal temp)
 {
-    if (qAbs(temp - _temp) > 5) {
-        Model3D::setTemp(temp);
-        startAnimation();
-
+    Model3D::setTemp(temp);
+    if (!_animationTimer->isActive()) {
+        _animationTimer->start();
     }
-
 }
 
 bool ModelBall::visible(int markerId) {

@@ -142,8 +142,8 @@ bool Controller::loadConfig() {
 
     balls = new ModelBall(thermo);
     balls->setTemp(25.0);
-    stove->setTemp(100.0);
-    fridge->setTemp(-20.0);
+    stove->setTemp(MAX_TEMP);
+    fridge->setTemp(MIN_TEMP);
     thermo->setModelVisible(true);
 
     if (fridge->markerIds().size() >= 2) {

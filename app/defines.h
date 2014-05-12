@@ -44,10 +44,10 @@
 
 #define UI_BUTTONS_IN_ROW 3
 
-#define ANIMATION_BALLS 100
+#define ANIMATION_BALLS 300
 
-#define MIN_TEMP (-20.0)
-#define MAX_TEMP 100.0
+#define MIN_TEMP (-5.0)
+#define MAX_TEMP 99.0
 #define TEMP_RADIUS 250.0
 #define MIN_VELOCITY 325.0
 #define MAX_VELOCITY 392.0

@@ -33,6 +33,8 @@
 #include "model3d.h"
 #include "defines.h"
 
+class QTimer;
+
 /* Boltzmann gas volume indicator animation (blue animated balls moving...) */
 class ModelBall : public Model3D
 {
@@ -41,12 +43,6 @@ public:
     explicit ModelBall(QObject *parent = 0);
     void createNode(QGLBuilder &builder, QGLMaterial *material);
     void createScene();
-    QTimeLine *createTimeLine(int duration, int minFrame,
-                        int maxFrame,
-                        int updateInterval,
-                        QTimeLine::CurveShape shape,
-                        const char *slot);
-    virtual void startAnimation();
     virtual QGLSceneNode *mainNode();
     double randomPosition(int seed = -1);
     qreal tempScale();
@@ -60,7 +56,7 @@ protected:
 signals:
     
 public slots:
-    virtual void animateBall(int feed);
+    virtual void animate();
     virtual void setTemp(qreal temp);
 
 
@@ -72,11 +68,8 @@ private:
 
     qreal _tempScale;
     int _transTable[ANIMATION_BALLS];
-    int _xAngle;
-    int _yAngle;
-    int _zAngle;
 
-    QTimeLine *_timeLine;
+    QTimer *_animationTimer;
 };
 
 #endif // MODELBALL_H

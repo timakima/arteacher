@@ -119,7 +119,6 @@ int MarkerDetector::getMarker(uchar *image, QList<Model3D*> *models)
                                   coords->markerCenter, coords->markerWidth,
                                   coords->trans);
             }
-            qDebug() << "found" << markerId << bestMatch;
             model->updateTransMat(coords->trans, markerId);
             model->setVisible(true, markerId);
 
