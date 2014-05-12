@@ -172,7 +172,7 @@ bool Controller::loadConfig() {
     _engine->setModels(fridge, stove, thermo, balls, display);
 
 
-    tempLabelText = new QVariant("T (C)");
+    tempLabelText = new QVariant("T ("+QString::fromUtf8(CELSIUS_STR)+")");
     velLabelText = new QVariant("v (m/s)");
 
     emit newInfo(WIDGET_BOLTZMANN, NULL, _engine,

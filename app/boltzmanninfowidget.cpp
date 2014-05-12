@@ -59,7 +59,7 @@ void BoltzmannInfoWidget::drawCoords(QPainter *painter) {
 }
 
 void BoltzmannInfoWidget::drawLabels(QPainter *painter) {
-    QString textT = "T (C)";
+    QString textT = "T ("+QString::fromUtf8(CELSIUS_STR)+")";
     QString textV = "v (m/s)";
 
     qreal topY = 10.0;

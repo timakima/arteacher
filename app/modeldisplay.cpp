@@ -29,7 +29,7 @@
 #include <qglbuilder.h>
 #include <qglpainter.h>
 #include "modeldisplay.h"
-
+#include "defines.h"
 
 ModelDisplay::ModelDisplay(QObject *parent) :
     Model3D(parent), _displayValue(QImage(200, 100, QImage::Format_ARGB32)), _parentVisible(false)
@@ -52,6 +52,10 @@ void ModelDisplay::buildPane() {
 
     _texture = new QGLTexture2D();
     _texture->setImage(_displayValue);
+
+    _font.setFamily("Monospace");
+    _font.setStyleHint(QFont::TypeWriter);
+    _font.setPointSize(48);
 }
 
 QGLSceneNode *ModelDisplay::mainNode() {
@@ -60,17 +64,22 @@ QGLSceneNode *ModelDisplay::mainNode() {
 
 void ModelDisplay::setTemp(qreal temp) {
 
-    QFont font = QApplication::font();
-    font.setPointSize(58);
-    QString str(QString::number((int)temp));
-    QFontMetrics metrics(font);
+    QString display = QString::number((int)qAbs((temp)));
+    if (display.size() < 2) {
+        display.prepend(" ");
+    }
 
+    (int)temp < 0 ? display.prepend("-") : display.prepend("+");
+
+    QString str(display +
+                QString::fromUtf8(CELSIUS_STR));
+    QFontMetrics metrics(_font);
     QRect rect = metrics.boundingRect(str);
     rect.adjust(0, 0, 1, 1);
 
     _displayValue.fill(0);
     QPainter p(&_displayValue);
-    p.setFont(font);
+    p.setFont(_font);
     p.setPen(Qt::red);
     p.drawText(25, 80, str);
     p.end();

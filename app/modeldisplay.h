@@ -57,6 +57,7 @@ private:
     QImage _displayValue;
     QGLTexture2D *_texture;
     bool _parentVisible;
+    QFont _font;
     
 };
 

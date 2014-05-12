@@ -51,6 +51,7 @@
 #define TEMP_RADIUS 250.0
 #define MIN_VELOCITY 325.0
 #define MAX_VELOCITY 392.0
+#define CELSIUS_STR "\u2103"
 
 
 #define FINNISH_FLAG "border-image: url(graphics/finnish.png);"
