@@ -1,7 +1,7 @@
 /****************************************************************************
 * AR Physics Teacher is an augmented reality teaching application
 *
-* Copyright (C) 2012 University of Helsinki
+* Copyright (C) 2012-2014 University of Helsinki
 *
 * Contact: Timo Makimattila <timo.makimattila@primoceler.com>
 *
@@ -23,71 +23,35 @@
 ****************************************************************************/
 
 #include <QDebug>
-#include <QTranslator>
-#include <QDesktopWidget>
-#include <QIcon>
+#include <QApplication>
 #include "app.h"
-
+#include "mainwindow.h"
+#include "controller.h"
 
 App::App(QObject *parent) :
     QObject(parent)
 {
+    Controller *controller = new Controller(this);
+    MainWindow *mw = new MainWindow(0);
+    mw->hide();
 
-    /* Changes application language on runtime */
-    _languageSelector = new LanguageSelector();
-
-    QDesktopWidget *desktop = QApplication::desktop();
-
-    /* Widget that contains OpenGL view and info view */
-    _screenWidget = new ScreenWidget();
-    _screenWidget->setGeometry(desktop->rect());
-    _viewportWidget = new ViewportWidget(_screenWidget);
-    _infoWidget = new InfoWidget(_screenWidget);
-
-    /* Main menu */
-    _mw = new MainWindow(desktop, _screenWidget, _infoWidget,
-                                    desktop->width(), desktop->height());
-
-    /* Set up controller */
-    _imageReader = new ImageReader();
-    _controller = new Controller(_mw, _imageReader, _languageSelector);
-
-    /* Metadata for debugging */
-    _screenWidget->setObjectName(QString("ScreenWidget"));
-    _viewportWidget->setObjectName(QString("ViewportWidget"));
-    _infoWidget->setObjectName(QString("InfoWidget"));
-    _mw->setObjectName(QString("MainWindow"));
-    connect(_screenWidget, SIGNAL(toggleDebug()), _controller, SLOT(toggleDebug()));
-    connect(_screenWidget, SIGNAL(toggleModel()), _controller, SLOT(toggleModel()));
-
-}
-
-bool App::initAR() {
-    bool ret;
-
-    /* Update background image in OpenGL widget */
-    connect(_controller, SIGNAL(setStatus(IplImage*, IplImage*,
-                                          QList<Model3D*>*)),
-            _viewportWidget, SLOT(setStatus(IplImage*, IplImage*,
-                                            QList<Model3D*>*)));
-
-    /* Create UI and connect buttons to controller */
-    _mw->initUi(_controller);
-
-    if (!_controller->initAR()) {
-        qDebug() << "Error initializing AR controller";
-        die();
-        ret = false;
-    } else {
-        ret = true;
+    if (!controller->initAR()) {
+        mw->error(tr("Unable to find any usable cameras. "
+                  "Check if they are connected"), tr("Camera error"));
+        QApplication::quit();
     }
-    return ret;
-}
 
-void App::die() {
-    _mw->close();
-    delete _controller;
-    delete _imageReader;
-    delete _mw;
-    delete _languageSelector;
+    mw->showFullScreen();
+    connect(controller, SIGNAL(setStatus(IplImage*,IplImage*,QList<Model3D*>*)),
+            mw, SLOT(setStatus(IplImage*,IplImage*,QList<Model3D*>*)));
+    connect(controller, SIGNAL(refresh(int,int)),
+            mw, SLOT(refreshValues(int,int)));
+
+    connect(mw, SIGNAL(languageChanged(QLocale::Language)),
+            controller, SLOT(setLanguage(QLocale::Language)));
+    connect(mw, SIGNAL(nextCamera()),
+            controller, SLOT(nextCamera()));
+    connect(mw, SIGNAL(toggleDebug()),
+            controller, SLOT(toggleDebug()));
+
 }

@@ -59,7 +59,6 @@ SOURCES += main.cpp\
     viewportwidget.cpp \
     markerdetector.cpp \
     model3d.cpp \
-    screenwidget.cpp \
     mainwindow.cpp \
     menubutton.cpp \
     languagebutton.cpp \
@@ -67,12 +66,11 @@ SOURCES += main.cpp\
     modelball.cpp \
     engine.cpp \
     app.cpp \
-    infowidget.cpp \
-    staticinfowidget.cpp \
     modeldisplay.cpp \
     boltzmanninfowidget.cpp \
     exitbutton.cpp \
-    languageselector.cpp
+    languageselector.cpp \
+    lcdwidget.cpp
 
 HEADERS  += \
     imagereader.h \
@@ -81,7 +79,6 @@ HEADERS  += \
     markerdetector.h \
     defines.h \
     model3d.h \
-    screenwidget.h \
     mainwindow.h \
     menubutton.h \
     languagebutton.h \
@@ -89,12 +86,11 @@ HEADERS  += \
     modelball.h \
     engine.h \
     app.h \
-    infowidget.h \
-    staticinfowidget.h \
     modeldisplay.h \
     boltzmanninfowidget.h \
     exitbutton.h \
-    languageselector.h
+    languageselector.h \
+    lcdwidget.h
 
 FORMS    +=
 

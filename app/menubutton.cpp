@@ -1,7 +1,7 @@
 /****************************************************************************
 * AR Physics Teacher is an augmented reality teaching application
 *
-* Copyright (C) 2012 University of Helsinki
+* Copyright (C) 2012-2014 University of Helsinki
 *
 * Contact: Timo Makimattila <timo.makimattila@primoceler.com>
 *
@@ -22,11 +22,20 @@
 *
 ****************************************************************************/
 
+#include <QDebug>
 #include "menubutton.h"
+
+
 
 MenuButton::MenuButton(QWidget *parent) :
     QPushButton(parent)
 {
+}
 
+void MenuButton::setImage(QString image)
+{
+    QString css = "border-image: url(%1)";
+    css = css.arg(image);
+    setStyleSheet(css);
 }
 

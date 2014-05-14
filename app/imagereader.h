@@ -1,7 +1,7 @@
 /****************************************************************************
 * AR Physics Teacher is an augmented reality teaching application
 *
-* Copyright (C) 2012 University of Helsinki
+* Copyright (C) 2012-2014 University of Helsinki
 *
 * Contact: Timo Makimattila <timo.makimattila@primoceler.com>
 *
@@ -25,6 +25,7 @@
 #ifndef IMAGEREADER_H
 #define IMAGEREADER_H
 
+#include <QObject>
 #include <QList>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -43,10 +44,11 @@ typedef struct {
 
 
 /* Handles camera operations */
-class ImageReader
+class ImageReader : public QObject
 {
+     Q_OBJECT
 public:
-    ImageReader();
+    ImageReader(QObject *parent = 0);
     ~ImageReader();
 
     /* Opens a camera device and inits capture buffers */

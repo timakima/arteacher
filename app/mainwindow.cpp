@@ -1,7 +1,7 @@
 /****************************************************************************
 * AR Physics Teacher is an augmented reality teaching application
 *
-* Copyright (C) 2012 University of Helsinki
+* Copyright (C) 2012-2014 University of Helsinki
 *
 * Contact: Timo Makimattila <timo.makimattila@primoceler.com>
 *
@@ -22,196 +22,207 @@
 *
 ****************************************************************************/
 
-#include <QApplication>
-#include <QGridLayout>
+#include <QHBoxLayout>
 #include <QDebug>
-#include <QLCDNumber>
-#include <QLabel>
+#include <QStackedLayout>
+#include <QKeyEvent>
+#include <QMessageBox>
+#include <QApplication>
 #include "mainwindow.h"
 #include "menubutton.h"
 #include "languagebutton.h"
 #include "camerabutton.h"
-#include "staticinfowidget.h"
 #include "boltzmanninfowidget.h"
-#include "engine.h"
 #include "defines.h"
 #include "exitbutton.h"
+#include "viewportwidget.h"
+#include "lcdwidget.h"
 
-MainWindow::MainWindow(QWidget *parent, ScreenWidget *screenWidget,
-                       InfoWidget *infoWidget,
-                       int width, int height) :
-    QWidget(parent), _buttonLayout(NULL), _screenWidget(screenWidget),
-    _infoWidget(infoWidget),
-    _width(width),
-    _height(height) {
-    connect(_screenWidget, SIGNAL(hideSession()), this, SLOT(hideSession()));
+const int MAINMENU_INDEX = 0;
+const int BOLTZMANN_INDEX = 1;
 
-    connect(_screenWidget, SIGNAL(clicked()), _infoWidget, SLOT(toggleShow()));
-    this->showFullScreen();
+MainWindow::MainWindow(QWidget *parent) :
+    QWidget(parent),
+    _mainMenu(new QWidget(this)),
+    _boltzmann(new QWidget(this)),
+    _video(new ViewportWidget(this)),
+    _coords(new BoltzmannInfoWidget(this)),
+    _lcd(new LCDWidget(this)),
+    _languageButton(new LanguageButton(this)),
+    _closeButton(new ExitButton(this))
+{
+    _mainMenu->show();
+    _boltzmann->hide();
+
+    connect(this, SIGNAL(status(IplImage*,IplImage*,QList<Model3D*>*)),
+            _video, SLOT(setStatus(IplImage*,IplImage*,QList<Model3D*>*)));
+
+    setupUI();
 }
 
-MainWindow::~MainWindow() {
-    delete _buttonLayout;
-}
+void MainWindow::setupUI() {
+    const QString boltzmannButtonBgr = "graphics/boltzmann_screen.png";
+    const float buttonAspectRatio = 3.0/4.0;
+    const int spacerPortion = 5;
+    QStackedLayout *mainLayout = new QStackedLayout();
+    mainLayout->insertWidget(MAINMENU_INDEX, _mainMenu);
+    mainLayout->insertWidget(BOLTZMANN_INDEX, _boltzmann);
+    setLayout(mainLayout);
 
-void MainWindow::initUi(Controller *controller) {
-    setMinimumWidth(_width);
-    setMinimumHeight(_height);
-    this->showFullScreen();
-    QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    mainLayout->setObjectName("Main layout");
-    _buttonLayout = new QGridLayout(this);
-    _buttonLayout->setObjectName("ButtonLayout");
-    this->setLayout(mainLayout);
+    QHBoxLayout *selectionLayout = new QHBoxLayout();
+    _mainMenu->setLayout(selectionLayout);
 
-    QFont font;
-    font.setPointSize(60);
-    QLabel *title = new QLabel(this);
-    title->setText(APP_NAME);
-    title->setFont(font);
-    mainLayout->addWidget(title);
-    mainLayout->setAlignment(title, Qt::AlignHCenter);
-    mainLayout->addLayout(_buttonLayout);
-    mainLayout->addSpacing(height() / 3);
+    QVBoxLayout *boltzmannLayout = new QVBoxLayout();
+    boltzmannLayout->addWidget(_video);
+    _boltzmann->setLayout(boltzmannLayout);
 
-    LanguageButton *langButton = new LanguageButton(this);
-    langButton->show();
-    CameraButton *cameraButton = new CameraButton(this);
-    ExitButton *exitButton = new ExitButton(this);
-    exitButton->show();
+    /* Camera */
+    CameraButton *cameraButton = new CameraButton();
+    cameraButton->setMinimumHeight(cameraButton->width() * buttonAspectRatio);
+    connect(this,
+            SIGNAL(status(IplImage*,IplImage*,QList<Model3D*>*)),
+            cameraButton,
+            SLOT(setStatus(IplImage*,IplImage*,QList<Model3D*>*)));
+    connect(cameraButton,
+            SIGNAL(clicked()),
+            this,
+            SIGNAL(nextCamera()));
 
-    ExitButton *hideSessionButton = new ExitButton(_screenWidget);
+    /* Boltzman experiment */
+    MenuButton *boltzmannButton = new MenuButton();
+    boltzmannButton->setImage(boltzmannButtonBgr);
+    boltzmannButton->setMinimumHeight(boltzmannButton->width() *
+                                      buttonAspectRatio);
+    connect(boltzmannButton, SIGNAL(clicked()), this, SLOT(boltzmannClicked()));
+    _coords->setVisible(false);
+    _lcd->setVisible(false);
 
-    calcButtonSize(cameraButton);
-    addButtonToRow(cameraButton);
+    /* Selection layout */
+    QSpacerItem *spacer = new QSpacerItem(width()/spacerPortion,
+                                          height()/spacerPortion);
+    selectionLayout->addSpacerItem(spacer);
+    selectionLayout->addWidget(cameraButton);
+    selectionLayout->addWidget(boltzmannButton);
+    selectionLayout->addSpacerItem(spacer);
 
-    connect(controller, SIGNAL(newButton(QString&,QString&)),
-            this, SLOT(addMenuButton(QString&,QString&)));
+    /* Control layout */
+    connect(_languageButton, SIGNAL(languageChanged(QLocale::Language)),
+            this, SIGNAL(languageChanged(QLocale::Language)));
+    _languageButton->show();
+    connect(_closeButton, SIGNAL(clicked()),
+             this, SLOT(closeButtonClicked()));
+    _closeButton->show();
+    placeFloatingWidgets();
 
-    connect(cameraButton, SIGNAL(clicked()), controller, SLOT(nextCamera()));
-
-    connect(controller, SIGNAL(setStatus(IplImage*, IplImage*,
-                                         QList<Model3D*>*)),
-            cameraButton, SLOT(setStatus(IplImage*, IplImage*,
-                                         QList<Model3D*>*)));
-
-    connect(controller, SIGNAL(newInfo(INFO_WIDGET,QVariant*,QObject*,char*)),
-            this, SLOT(addInfo(INFO_WIDGET,QVariant*,QObject*,char*)));
-
-    connect(exitButton, SIGNAL(clicked()), this, SLOT(quit()));
-    connect(hideSessionButton, SIGNAL(clicked()), this,
-            SLOT(hideSession()));
-
-    connect(langButton, SIGNAL(languageChanged(QLocale::Language)),
-            controller, SLOT(setLanguage(QLocale::Language)));
-
-}
-
-
-
-void MainWindow::calcButtonSize(MenuButton *button) {
-    int width = this->width();
-    int buttonWidth = width / UI_BUTTONS_IN_ROW - 30;
-    int buttonHeight = ((double)buttonWidth / 4.0)  * 3.0;
-    button->setMaximumSize(buttonWidth, buttonHeight);
-}
-
-void MainWindow::addButtonToRow(MenuButton *button) {
-    int buttonCount;
-    buttonCount = _buttonLayout->count();
-    int row = buttonCount % UI_BUTTONS_IN_ROW;
-    int col = buttonCount / UI_BUTTONS_IN_ROW;
-    _buttonLayout->addWidget(button, col, row);
+    _languageButton->raise();
+    _closeButton->raise();
 }
 
 
-void MainWindow::addInfo(INFO_WIDGET widgetType, QVariant *params,
-                         QObject *sender, char *signal) {
-    Q_ASSERT(_infoWidget);
-    QWidget *infoField;
-    QLCDNumber *lcd;
-    BoltzmannInfoWidget *boltzmann;
-    QImage *image;
-    QLayout *subLayout;
-    QLabel *label;
-    QFont font;
+void MainWindow::setStatus(IplImage *rgb,
+                             IplImage *gray,
+                             QList<Model3D*> *models) {
 
-    switch (widgetType) {
-        case WIDGET_LCD:
-        lcd = new QLCDNumber();
-        lcd->setSegmentStyle(QLCDNumber::Flat);
-        lcd->setFrameStyle(QFrame::NoFrame);
-        font = QApplication::font();
-        label = new QLabel(params->toString());
-        label->setAlignment(Qt::AlignVCenter);
-        font.setPointSize(20);
-        label->setFont(font);
-        connect((Engine*)sender, signal, lcd, SLOT(display(int)));
-        subLayout = new QHBoxLayout();
-        subLayout->addWidget(lcd);
-        subLayout->addWidget(label);
-        subLayout->setMargin(0);
-        infoField = new QWidget();
-        infoField->setLayout(subLayout);
-        break;
-        case WIDGET_IMAGE:
-        image = new QImage(params->toString());
-        infoField = new StaticInfoWidget(0, image);
-        break;
-        case WIDGET_BOLTZMANN:
-        boltzmann = new BoltzmannInfoWidget();
-        connect((Engine*)sender, signal, boltzmann, SLOT(refresh(int, int)));
-        infoField = (QWidget*)boltzmann;
-        break;
-    default:
-        qDebug() << "Unknown widget type. Ignoring.";
-        goto done;
-    }
-
-    _infoWidget->layout()->addWidget(infoField);
-
-    done:
-    return;
-}
-
-void MainWindow::showSession() {
-    Q_ASSERT(_screenWidget);
-    _screenWidget->showFullScreen();
-    this->hide();
-}
-
-void MainWindow::hideSession() {
-    Q_ASSERT(_screenWidget);
-    this->showFullScreen();
-    _screenWidget->hide();
+    emit status(rgb, gray, models);
 }
 
 
-void MainWindow::addMenuButton(QString &name, QString &background) {
-    MenuButton *menuButton = new MenuButton(this);
-    menuButton->setText(name);
-    QString bgr("border-image: url(");
-    bgr.append(background);
-    bgr.append(");");
-    menuButton->setStyleSheet(bgr);
+void MainWindow::refreshValues(int temp, int velocity) {
+    _lcd->updateLCD(temp, velocity);
+    _coords->refresh(temp, velocity);
+}
 
-    calcButtonSize(menuButton);
-    connect(menuButton, SIGNAL(clicked()),
-            this, SLOT(showSession()));
-    addButtonToRow(menuButton);
+void MainWindow::error(QString errorMsg, QString errorTitle)
+{
+
+    QMessageBox box(QMessageBox::Critical,
+                    errorTitle,
+                    errorMsg,
+                    QMessageBox::Ok);
+    box.exec();
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event) {
-    qDebug() << __FUNCTION__;
-    int key;
-    key = event->key();
-    if (key == Qt::Key_Escape) {
-        this->quit();
+    switch(event->key()) {
+    case Qt::Key_Escape:
+        closeButtonClicked();
+        break;
+    case Qt::Key_D:
+        emit toggleDebug();
+        break;
+    default:
+        break;
     }
 }
 
+void MainWindow::mousePressEvent(QMouseEvent *event)
+{
+    QWidget::mousePressEvent(event);
+    QStackedLayout *mainLayout = qobject_cast<QStackedLayout*>(layout());
+    if (mainLayout->currentIndex() == BOLTZMANN_INDEX) {
+        _video->lower();
+        _coords->raise();
+        _lcd->raise();
+        _coords->setVisible(!_coords->isVisible());
+        _lcd->setVisible(!_lcd->isVisible());
+    }
+    _languageButton->raise();
+    _closeButton->raise();
 
-void MainWindow::quit() {
-    qDebug() << __PRETTY_FUNCTION__;
-    QApplication::quit();
 }
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    placeFloatingWidgets();
+    QWidget::resizeEvent(event);
+}
+
+void MainWindow::boltzmannClicked()
+{
+    QStackedLayout *mainLayout = qobject_cast<QStackedLayout*>(layout());
+    if (mainLayout->currentIndex() == MAINMENU_INDEX) {
+        mainLayout->setCurrentIndex(BOLTZMANN_INDEX);
+    } else {
+        /* Fall back to main menu in every other case */
+        mainLayout->setCurrentIndex(MAINMENU_INDEX);
+    }
+    _languageButton->raise();
+    _closeButton->raise();
+
+}
+
+void MainWindow::closeButtonClicked()
+{
+    QStackedLayout *mainLayout = qobject_cast<QStackedLayout*>(layout());
+    if (mainLayout->currentIndex() == MAINMENU_INDEX) {
+        QApplication::quit();
+    } else {
+        /* Fall back to main menu in every other case */
+        _coords->hide();
+                _lcd->hide();
+        mainLayout->setCurrentIndex(MAINMENU_INDEX);
+    }
+    _languageButton->raise();
+    _closeButton->raise();
+
+}
+
+void MainWindow::placeFloatingWidgets()
+{
+    const int buttonWidth = 50; // px, png file
+    const int buttonHeight = 50; // px, png file
+    const int spacer = 5; /* px */
+    const float coordsXPortion = 0.4;
+    const int coordsYPortion = 5;
+
+    _languageButton->setGeometry(width() - buttonWidth * 2 - spacer, 0,
+                                 buttonWidth, buttonHeight);
+    _closeButton->setGeometry(width() - buttonWidth - spacer, 0,
+                             buttonWidth, buttonHeight);
+    _coords->setGeometry(0, 0, width() * coordsXPortion,
+                         height() / coordsYPortion);
+    _lcd->setGeometry(_coords->x() + _coords->width(), 0,
+                      width() - _coords->width() - 2 * buttonWidth,
+                      height() / 10);
+}
+

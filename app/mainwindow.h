@@ -1,7 +1,7 @@
 /****************************************************************************
 * AR Physics Teacher is an augmented reality teaching application
 *
-* Copyright (C) 2012 University of Helsinki
+* Copyright (C) 2012-2014 University of Helsinki
 *
 * Contact: Timo Makimattila <timo.makimattila@primoceler.com>
 *
@@ -26,53 +26,57 @@
 #define MAINWINDOW_H
 
 #include <QWidget>
-#include <QGridLayout>
-#include "screenwidget.h"
-#include "infowidget.h"
-#include "menubutton.h"
-#include "controller.h"
+#include <QLocale>
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
+class BoltzmannInfoWidget;
+class LCDWidget;
+class ViewportWidget;
+class Model3D;
+class LanguageButton;
+class ExitButton;
 
 /* Window that contains main menu */
 class MainWindow : public QWidget
 {
     Q_OBJECT
 public:
-    explicit MainWindow(QWidget *parent = 0, ScreenWidget *screenWidget = 0,
-                        InfoWidget *infoWidget = 0,
-                        int width = 0, int height = 0);
-    ~MainWindow();
+    explicit MainWindow(QWidget *parent = 0);
 
-    /* Scales and adds menu buttons to screen */
-    void initUi(Controller *controller);
-    void addLanguageButton();
-    void calcButtonSize(MenuButton *button);
-    void addButtonToRow(MenuButton *button);
-
-signals:
-
+    void setupUI();
 protected:
     void keyPressEvent(QKeyEvent *event);
+    void mousePressEvent(QMouseEvent *event);
+    void resizeEvent(QResizeEvent *event);
 
 public slots:
-    /* Adds menu button with given filename as bgr image */
-    void addMenuButton(QString &name, QString &background);
+    void setStatus(IplImage *rgb, IplImage *gray, QList<Model3D *> *models);
+    void refreshValues(int temp, int velocity);
+    void error(QString errorMsg, QString errorTitle = "Error");
 
-    /* Adds widget to info bar at the top of 3D view */
-    void addInfo(INFO_WIDGET widgetType, QVariant *params,
-                 QObject *sender, char *signal);
+signals:
+    void status(IplImage *rgb, IplImage *gray, QList<Model3D *> *models);
+    void languageChanged(QLocale::Language language);
+    void tempRefresh(int temp);
+    void velocityRefresh(int velocity);
+    void nextCamera();
+    void toggleDebug();
 
-    /* Shows and hides the 3D view */
-    void showSession();
-    void hideSession();
 
-    void quit();
+private slots:
+    void boltzmannClicked();
+    void closeButtonClicked();
 
 private:
-    QGridLayout *_buttonLayout;
-    ScreenWidget *_screenWidget;
-    InfoWidget *_infoWidget;
-    int _width;
-    int _height;
+    void placeFloatingWidgets();
+    QWidget *_mainMenu;
+    QWidget *_boltzmann;
+    ViewportWidget *_video;
+    BoltzmannInfoWidget *_coords;
+    LCDWidget *_lcd;
+    LanguageButton *_languageButton;
+    ExitButton *_closeButton;
 
 };
 

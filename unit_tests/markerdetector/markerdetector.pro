@@ -1,36 +1,42 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2012-02-17T10:30:51
+# Project created by QtCreator 2012-02-24T14:52:51
 #
 #-------------------------------------------------
 
-QT       += testlib
+QT       += testlib gui
 
-QT       -= gui
 
-TARGET = tst_imagereadertest
+TARGET = tst_markerdetectortest
 CONFIG   += console
+CONFIG   += qt3d
+
 CONFIG   -= app_bundle
 
+DEFINES += AR_DEFAULT_PIXEL_FORMAT=AR_PIXEL_FORMAT_BGRA
+
 TEMPLATE = app
+
+INCLUDEPATH += ../../artoolkit/inc/
 INCLUDEPATH += ../../app/
-INCLUDEPATH += /opt/local/include
-
-
-HEADERS += ../../app/imagereader.h ../../app/defines.h
-SOURCES += tst_imagereadertest.cpp ../../app/imagereader.cpp
+HEADERS += ../../app/markerdetector.h ../../app/defines.h ../../app/model3d.h
+SOURCES += tst_markerdetectortest.cpp ../../app/markerdetector.cpp \
+            ../../app/model3d.cpp
 DEFINES += SRCDIR=\\\"$$PWD/\\\"
 
 
-INCLUDEPATH += /opt/local/include
-
-linux-g++* {
+linux* {
+    message("Building for Linux")
     INCLUDEPATH += /usr/include/opencv
-    LIBS += -lcv -lhighgui -lcxcore -lcvaux
+    LIBS += -L../../artoolkit/ -lartoolkit
+    LIBS += -lopencv_core -lopencv_highgui -lopencv_imgproc
+    #LIBS += -lcv -lhighgui -lcxcore -lcvaux
 }
 
 # macports
 mac* {
+    INCLUDEPATH += /opt/local/include
+    LIBS += -L../../artoolkit/ -lartoolkit
     LIBS += -L/opt/local/lib -lopencv_core -lopencv_highgui -lopencv_imgproc
     LIBS += -framework Qt3D
 }
@@ -50,7 +56,8 @@ win32* {
     INCLUDEPATH += ../../../opencv/modules/flann/include
     INCLUDEPATH += ../../../opencv/modules/objdetect/include
     INCLUDEPATH += ../../../opencv/modules/legacy/include
-
-    LIBS += -L../../../opencv-build/bin/Debug -lopencv_core231d -lopencv_highgui231d -lopencv_imgproc231d
+    LIBS += -L../../artoolkit/debug/ -lartoolkit
+    LIBS += -L../../../opencv-build/bin/Debug -lopencv_core231d -lopencv_highgui231d \
+            -lopencv_imgproc231d
 
 }

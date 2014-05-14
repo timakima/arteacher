@@ -1,7 +1,7 @@
 /****************************************************************************
 * AR Physics Teacher is an augmented reality teaching application
 *
-* Copyright (C) 2012 University of Helsinki
+* Copyright (C) 2012-2014 University of Helsinki
 *
 * Contact: Timo Makimattila <timo.makimattila@primoceler.com>
 *
@@ -26,9 +26,10 @@
 #include "imagereader.h"
 #include "defines.h"
 
-ImageReader::ImageReader():
+ImageReader::ImageReader(QObject *parent):
+    QObject(parent),
     ir_ocv(new opencv_handle),
-    _camera(NULL), _cameraIndex(0)
+    _camera(0), _cameraIndex(0)
 
 {
     setupOpenCv();
@@ -38,7 +39,9 @@ ImageReader::ImageReader():
 ImageReader::~ImageReader()
 {
     closeCamera();
-    delete ir_ocv;
+    if (ir_ocv) {
+        delete ir_ocv;
+    }
 }
 
 void ImageReader::setupOpenCv() {

@@ -47,6 +47,8 @@ private:
     Model3D *_banana;
     Model3D *_owl;
     MarkerDetector *_detector;
+    int _bananaId;
+    int _owlId;
 
 };
 
@@ -56,34 +58,14 @@ MarkerdetectorTest::MarkerdetectorTest()
 
 
 void MarkerdetectorTest::initTestCase() {
-    QDir dir;
-    QDir abspath = dir.absolutePath();
-    abspath.cd("../");
-    abspath.setCurrent(abspath.path());
     _detector = new MarkerDetector();
     QVERIFY(_detector);
     _banana = new Model3D();
     QVERIFY(_banana);
-    QString patB("patt.hiro");
-    QString nameB("banana");
-    _banana->setPattern(patB);
-    _banana->setName(nameB);
-    coordinates_t *coordsB;
-    _banana->coordPtr(&coordsB);
-    coordsB->markerWidth = 34.4;
-    coordsB->markerCenter[0] = 0.0;
-    coordsB->markerCenter[1] = 0.0;
+    _banana->addModel("models/blank.3ds", "markers/patt.hiro");
 
     _owl = new Model3D();
-    QString patO("markers/marker_a.pat");
-    QString nameO("owl");
-    _owl->setPattern(patO);
-    _owl->setName(nameO);
-    coordinates_t *coordsO;
-    _owl->coordPtr(&coordsO);
-    coordsO->markerWidth = 34.4;
-    coordsO->markerCenter[0] = 0.0;
-    coordsO->markerCenter[1] = 0.0;
+    _owl->addModel("models/blank.3ds", "markers/patt.hiro");
 }
 
 void MarkerdetectorTest::cleanupTestCase() {
@@ -112,18 +94,15 @@ void MarkerdetectorTest::getMarker() {
     QImage hasMarker("tests/testdata/bgra_image_with_marker.png");
     QImage noMarker("tests/testdata/bgra_image_without_marker.png");
 
-    _banana->coordPtr(&coords);
-    memset(coords->vertex, 0, 8 * sizeof(double));
+    coords = _banana->coordPtr(_bananaId);
     memset(expected_position, 0, 8 * sizeof(double));
 
     /* No marker, position zero */
     QVERIFY(!_detector->getMarker(NULL, &models));
     QVERIFY(!_detector->getMarker(noMarker.bits(), &models));
-    QVERIFY(!memcmp(expected_position, coords->vertex, 8 * sizeof(double)));
 
     /* Marker found, position changed */
     QVERIFY(_detector->getMarker((hasMarker.bits()), &models) == 1);
-    QVERIFY(memcmp(expected_position, coords->vertex, 8 * sizeof(double)));
 
     /* Visibility */
     QVERIFY(_banana->visible() == true);

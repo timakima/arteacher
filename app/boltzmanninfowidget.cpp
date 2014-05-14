@@ -1,7 +1,7 @@
 /****************************************************************************
 * AR Physics Teacher is an augmented reality teaching application
 *
-* Copyright (C) 2012 University of Helsinki
+* Copyright (C) 2012-2014 University of Helsinki
 *
 * Contact: Timo Makimattila <timo.makimattila@primoceler.com>
 *
@@ -30,6 +30,20 @@
 #include "defines.h"
 #include <math.h>
 
+/* Pixels from left & bottom of grid */
+const int LEFTMARGIN = 50;
+const int RIGHTMARGIN = 50;
+const int TOPMARGIN = 50;
+const int BOTTOMMARGIN = 50;
+const int GRIDX = 6;
+const int GRIDY = 4;
+const int SCALE = 20; /* Scale for values in grid */
+const float MINT = -20.0;
+const float MAXT = 100.0;
+const float MINV = 320;
+const float MAXV = 400;
+const QColor BGRCOLOR = QColor(0x30, 0x30, 0x30);
+
 BoltzmannInfoWidget::BoltzmannInfoWidget(QWidget *parent) :
     QWidget(parent), _temp(-1), _velocity(-1)
 {
@@ -38,88 +52,125 @@ BoltzmannInfoWidget::BoltzmannInfoWidget(QWidget *parent) :
 
 
 void BoltzmannInfoWidget::drawCoords(QPainter *painter) {
-    qreal topY = 10.0;
-    qreal leftX = 10.0;
-    qreal rightX = this->width() - leftX;
-    qreal bottomY = this->height() - topY;
+    if (!painter) {
+        return;
+    }
+    const qreal textMargin = 10.0;
     QVector<QLineF> lines;
-    QLineF xAxis(leftX, bottomY, rightX, bottomY);
-    QLineF xArrow1(rightX, bottomY, rightX - 5, bottomY + 5);
-    QLineF xArrow2(rightX, bottomY, rightX - 5, bottomY - 5);
-    QLineF yAxis(leftX, topY, leftX, bottomY);
-    QLineF yArrow1(leftX, topY, leftX - 5, topY + 5);
-    QLineF yArrow2(leftX, topY, leftX + 5, topY + 5);
-    lines.append(xAxis);
-    lines.append(xArrow1);
-    lines.append(xArrow2);
-    lines.append(yAxis);
-    lines.append(yArrow1);
-    lines.append(yArrow2);
+    qreal topY = TOPMARGIN;
+    qreal leftX = LEFTMARGIN;
+    qreal rightX = width() - leftX;
+    qreal bottomY = height() - BOTTOMMARGIN;
+    qreal diffY = (bottomY - topY) / GRIDY;
+    qreal diffX = (rightX - leftX) / GRIDX;
+    int valueY = 400; /* Y-axis start value */
+    int valueX = -20; /* X-axis start value */
+    const int fontSize = 10;
+    const int spacer = 10; /* px */
+    const int gridWidth = 1; /* px */
+
+    /* X-grid*/
+    for (int i = 0; i <= GRIDX; i++) {
+        lines.append(QLineF(leftX + (i * diffX),
+                            topY, leftX + (i * diffX), bottomY));
+    }
+
+    /* Y-grid */
+    for (int i = 0; i <= GRIDY; i++) {
+        lines.append(QLineF(leftX, topY + (i * diffY),
+                            rightX, topY + (i * diffY)));
+    }
+
+    QPen pen(Qt::gray);
+    pen.setWidth(gridWidth);
+    painter->setPen(pen);
     painter->drawLines(lines);
-}
 
-void BoltzmannInfoWidget::drawLabels(QPainter *painter) {
-    QString textT = "T ("+QString::fromUtf8(CELSIUS_STR)+")";
-    QString textV = "v (m/s)";
+    QFont font;
+    font.setPointSize(fontSize);
+    painter->setFont(font);
+    painter->setRenderHint(QPainter::Antialiasing);
 
-    qreal topY = 10.0;
-    qreal leftX = 10.0;
-    qreal rightX = this->width() - leftX;
-    qreal bottomY = this->height() - topY;
+    painter->drawText(width() - RIGHTMARGIN + spacer, height() - BOTTOMMARGIN,
+                      "T ("+QString::fromUtf8(CELSIUS_STR)+")");
+    for (int i = 0; i <= GRIDX; i++) {
+        QString text = QString::number(valueX);
+        valueX += SCALE;
+        painter->drawText(leftX + (i * diffX), height() - BOTTOMMARGIN/2, text);
+    }
 
-    painter->drawText((int)rightX - 50, (int)bottomY - 40, 50, 20, 0, textT);
-    painter->drawText((int)leftX + 30, (int)topY + 20, 50, 20, 0, textV);
+
+
+    /* Y-grid values */
+    painter->drawText(0, TOPMARGIN/2, "v (m/s)");
+    for (int i = 0; i <= GRIDY; i++) {
+        QString text = QString::number(valueY);
+        valueY -= SCALE;
+        painter->drawText(textMargin, topY + (i * diffY), text);
+    }
+
 
 }
 
 void BoltzmannInfoWidget::drawChart(QPainter *painter) {
-    qreal topY = 10.0;
-    qreal leftX = 10.0;
-    qreal rightX = this->width() - leftX;
-    qreal bottomY = this->height() - topY;
-    QPen pen;
-    pen.setColor(QColor(0x60, 0x60, 0x60));
-    pen.setWidth(2);
-    painter->setPen(pen);
-    QLineF constant(leftX, bottomY, rightX, topY);
+    if (!painter) {
+        return;
+    }
+
+    /* Pen sizes */
+    const int pointSize = 8;
+    const int slopeSize = 2;
+
+    QPen slopePen;
+    QPen statusPen;
+
+    /* coord area */
+    qreal topY = TOPMARGIN;
+    qreal leftX = LEFTMARGIN;
+    qreal rightX = width() - RIGHTMARGIN;
+    qreal bottomY = height() - BOTTOMMARGIN;
+
+    /* draw area */
+    float k = (MAX_VELOCITY - MIN_VELOCITY) / (MAX_TEMP - MIN_TEMP);
+    float dx = (rightX - leftX ) / (MAXT - MINT);
+    float dy = (bottomY - topY) / (MAXV - MINV);
+
+    float minVg = MAX_VELOCITY - k * (MAXT - MINT);
+    float maxVg = MAX_VELOCITY;
+
+    float minY = bottomY - (minVg - MINV) * dy;
+    float maxY = bottomY - (maxVg - MINV) * dy;
+    float minX = leftX;
+    float maxX = leftX + (MAXT - MINT) * dx;
+
+    qreal percentageX = (_temp - MINT) / (MAXT - MINT);
+
+    qreal x = leftX + percentageX * (MAXT - MINT) * dx;
+    qreal y = minY -  percentageX * (maxVg - minVg) * dy;
+
+    slopePen.setColor(Qt::white);
+    slopePen.setWidth(slopeSize);
+    statusPen.setColor(Qt::red);
+    statusPen.setWidth(pointSize);
+
+    /* Draw the white slope */
+    painter->setPen(slopePen);
+    QLineF constant(minX, minY, maxX, maxY);
     painter->drawLine(constant);
-}
 
-void BoltzmannInfoWidget::drawStatus(QPainter *painter) {
-    qreal topY = 10.0;
-    qreal leftX = 10.0;
-    qreal rightX = this->width() - leftX;
-    qreal bottomY = this->height() - topY;
-
-    qreal dx = rightX - leftX;
-    qreal dy = bottomY - topY;
-
-    qreal percentage = ((qreal)_velocity - (qreal)MIN_VELOCITY) /
-            ((qreal)MAX_VELOCITY - (qreal)MIN_VELOCITY);
-
-    qreal x = leftX + dx * percentage - 4;
-    qreal y = bottomY - dy * percentage - 4;
-
-    QPen pen;
-    pen.setColor(Qt::red);
-    pen.setWidth(8);
-    painter->setPen(pen);
-    painter->drawEllipse(x, y, 8, 8);
+    /* Draw the red dot */
+    painter->setPen(statusPen);
+    painter->drawEllipse(x - pointSize/2, y - pointSize/2,
+                         pointSize, pointSize);
 
 }
 
 void BoltzmannInfoWidget::paintEvent(QPaintEvent *event) {
     QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing);
-    QPen pen;
-    pen.setColor(QColor(0xEE, 0xEE, 0xEE));
-    pen.setWidth(3);
-    painter.setPen(pen);
-    painter.fillRect(event->rect(), QBrush(QColor(0x30, 0x30, 0x30)));
+    painter.fillRect(event->rect(), QBrush(BGRCOLOR));
     drawCoords(&painter);
-    drawLabels(&painter);
+    painter.setRenderHint(QPainter::Antialiasing);
     drawChart(&painter);
-    drawStatus(&painter);
 }
 
 
@@ -134,6 +185,6 @@ void BoltzmannInfoWidget::setVel(int velocity) {
 void BoltzmannInfoWidget::refresh(int temp, int velocity) {
     setTemp(temp);
     setVel(velocity);
-    this->update();
+    update();
 }
 

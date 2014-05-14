@@ -224,10 +224,10 @@ void EngineTest::velocity_data() {
     QTest::addColumn<qreal>("temp");
     QTest::addColumn<qreal>("result");
     int i = 0;
-    QTest::newRow(rowN()) << -20.0 << 325.0;
-    QTest::newRow(rowN()) << 100.0 << 392.0;
-    QTest::newRow(rowN()) << 20.0 << 347.33;
-    QTest::newRow(rowN()) << 60.0 << 369.66;
+    QTest::newRow(rowN()) << -5.0 << 333.0;
+    QTest::newRow(rowN()) << 100.0 << 392.5;
+    QTest::newRow(rowN()) << 20.0 << 347.1;
+    QTest::newRow(rowN()) << 60.0 << 369.9;
 }
 
 

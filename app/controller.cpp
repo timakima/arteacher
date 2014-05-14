@@ -1,7 +1,7 @@
 /****************************************************************************
 * AR Physics Teacher is an augmented reality teaching application
 *
-* Copyright (C) 2012 University of Helsinki
+* Copyright (C) 2012-2014 University of Helsinki
 *
 * Contact: Timo Makimattila <timo.makimattila@primoceler.com>
 *
@@ -35,13 +35,16 @@
 
 
 
-Controller::Controller(QObject *parent, ImageReader *reader,
-                       LanguageSelector *languageSelector) :
-    QObject(parent), _reader(reader), _timer(new QTimer(this)),
-    _detector(new MarkerDetector()), _engine(new Engine(this)),
-    _languageSelector(languageSelector)
-{
+Controller::Controller(QObject *parent) :
+    QObject(parent),
+    _reader(new ImageReader(this)),
+    _timer(new QTimer(this)),
+    _detector(new MarkerDetector()),
+    _languageSelector(new LanguageSelector(this)),
+    _engine(new Engine(this))
 
+{
+    connect(_engine, SIGNAL(refresh(int,int)), this, SIGNAL(refresh(int,int)));
 }
 
 
@@ -49,9 +52,6 @@ Controller::~Controller() {
     if (_timer && _timer->isActive()) {
         _timer->stop();
     }
-    delete _timer;
-    delete _detector;
-    delete _engine;
 
 }
 
@@ -108,25 +108,21 @@ bool Controller::loadConfig() {
 
     bool ret;
     Model3D *fridge;
-    QString fridgeFile("models/blank2.3ds"); //("models/fridge.3ds");
-    QString fridgePat1("markers/marker_a.pat");
-    QString fridgePat2("markers/marker_b.pat");
+    const QString fridgeFile("models/blank.3ds"); //("models/fridge.3ds");
+    const QString fridgePat1("markers/marker_a.pat");
+    const QString fridgePat2("markers/marker_b.pat");
 
     Model3D *stove;
-    QString stoveFile("models/blank2.3ds"); //("models/stove.3ds");
-    QString stovePat1("markers/marker_c.pat");
-    QString stovePat2("markers/marker_d.pat");
+    const QString stoveFile("models/blank.3ds"); //("models/stove.3ds");
+    const QString stovePat1("markers/marker_c.pat");
+    const QString stovePat2("markers/marker_d.pat");
 
     Model3D *thermo;
-    QString thermoFile("models/thermo.3ds");
-    QString thermoPat("markers/marker_e.pat");
+    const QString thermoFile("models/thermo.3ds");
+    const QString thermoPat("markers/marker_e.pat");
 
     Model3D *balls;
     Model3D *display;
-
-    QVariant *tempLabelText;
-    QVariant *velLabelText;
-    QString boltzmannScreen;
 
     if (!createModel(0.0,
                     QVector3D(0, 0, 0), &fridge, fridgeFile, fridgeFile, fridgePat1, fridgePat2) ||
@@ -171,24 +167,6 @@ bool Controller::loadConfig() {
 
     _engine->setModels(fridge, stove, thermo, balls, display);
 
-
-    tempLabelText = new QVariant("T ("+QString::fromUtf8(CELSIUS_STR)+")");
-    velLabelText = new QVariant("v (m/s)");
-
-    emit newInfo(WIDGET_BOLTZMANN, NULL, _engine,
-                 (char*)SIGNAL(refresh(int,int)));
-    emit newInfo(WIDGET_LCD, velLabelText, _engine,
-                 (char*)SIGNAL(refreshVel(int)));
-    emit newInfo(WIDGET_LCD, tempLabelText, _engine,
-                 (char*)SIGNAL(refreshTemp(int)));
-
-
-    for (int i=0; i < 1; i++) {
-        QString name = "Boltzmann";
-        boltzmannScreen = QString("graphics/boltzmann_screen.png");
-        emit newButton(name, boltzmannScreen);
-    }
-
     ret = true;
     goto done;
 
@@ -202,11 +180,12 @@ bool Controller::loadConfig() {
 void Controller::showImage() {
     IplImage *rgbImage;
     IplImage *bgraImage;
-    bool detected;
     _reader->getImages(&rgbImage, &bgraImage);
     Q_ASSERT(rgbImage);
     Q_ASSERT(bgraImage);
-    detected = _detector->getMarker((uchar*)bgraImage->imageData, &_models);
+    bool detected =
+            _detector->getMarker((uchar*)bgraImage->imageData, &_models);
+    Q_UNUSED(detected);
     _engine->update();
     emit setStatus(rgbImage, bgraImage, &_models);
     _timer->setSingleShot(true);

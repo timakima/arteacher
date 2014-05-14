@@ -1,7 +1,7 @@
 /****************************************************************************
 * AR Physics Teacher is an augmented reality teaching application
 *
-* Copyright (C) 2012 University of Helsinki
+* Copyright (C) 2012-2014 University of Helsinki
 *
 * Contact: Timo Makimattila <timo.makimattila@primoceler.com>
 *
@@ -31,20 +31,15 @@
 
 int main(int argc, char *argv[])
 {
+    const QString qssFileName = "style.qss";
     QApplication a(argc, argv);
 
     /* Load external stylesheet */
-    QFile qssFile("style.qss");
+    QFile qssFile(qssFileName);
     qssFile.open(QFile::ReadOnly);
     QString style= QLatin1String(qssFile.readAll());
     a.setStyleSheet(style);
-
     App app;
-    QObject::connect(&a, SIGNAL(aboutToQuit()), &app, SLOT(die()));
-
-    if (app.initAR()) {
-        return a.exec();
-    } else {
-        return 1;
-    }
+    Q_UNUSED(app);
+    return a.exec();
 }

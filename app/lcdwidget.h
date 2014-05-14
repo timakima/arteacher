@@ -1,7 +1,7 @@
 /****************************************************************************
 * AR Physics Teacher is an augmented reality teaching application
 *
-* Copyright (C) 2012 University of Helsinki
+* Copyright (C) 2012-2014 University of Helsinki
 *
 * Contact: Timo Makimattila <timo.makimattila@primoceler.com>
 *
@@ -22,29 +22,31 @@
 *
 ****************************************************************************/
 
-#ifndef STATICINFOWIDGET_H
-#define STATICINFOWIDGET_H
+#ifndef LCDWIDGET_H
+#define LCDWIDGET_H
 
 #include <QWidget>
-#include <QImage>
 
-/* Displays and image in info bar */
-class StaticInfoWidget : public QWidget
+class QLCDNumber;
+
+/* A bar of widgets displayed on top of video */
+class LCDWidget : public QWidget
 {
     Q_OBJECT
 public:
-    explicit StaticInfoWidget(QWidget *parent = 0, QImage *image = 0);
+    explicit LCDWidget(QWidget *parent = 0);
     
-protected:
-    void paintEvent(QPaintEvent *event);
-    QSize sizeHint();
-
 signals:
-    
+    void tempRefresh(int temp);
+    void velocityRefresh(int velocity);
+
 public slots:
+    void updateLCD(int temp, int velocity);
+
 private:
-    QImage *_image;
-    
+    QLCDNumber *addLCD(QString labelText);
+
+
 };
 
-#endif // STATICINFOWIDGET_H
+#endif // LCDWIDGET_H

@@ -1,7 +1,7 @@
 /****************************************************************************
 * AR Physics Teacher is an augmented reality teaching application
 *
-* Copyright (C) 2012 University of Helsinki
+* Copyright (C) 2012-2014 University of Helsinki
 *
 * Contact: Timo Makimattila <timo.makimattila@primoceler.com>
 *
@@ -142,8 +142,6 @@ void ModelBall::draw(QGLPainter *painter) {
 
 /* Animates the scene and balls */
 void ModelBall::animate() {
-
-    qDebug() << Q_FUNC_INFO;
     /* Scale according to temperature */
     _tempScale = tempScale() * 3.0 + 0.1;
 

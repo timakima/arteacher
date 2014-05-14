@@ -22,30 +22,20 @@
 *
 ****************************************************************************/
 
-#ifndef SCREENWIDGET_H
-#define SCREENWIDGET_H
 
-#include <QWidget>
-#include <QKeyEvent>
+#ifndef TOOL_H
+#define TOOL_H
 
-/* Placeholder to position OpenGL view and info bar */
-class ScreenWidget : public QWidget
-{
-    Q_OBJECT
-public:
-    explicit ScreenWidget(QWidget *parent = 0);
+#include <QDebug>
 
-protected:
-    void keyPressEvent(QKeyEvent *event);
-    void mousePressEvent(QMouseEvent *event);
-signals:
-    void hideSession();
-    void toggleDebug();
-    void toggleModel();
-    void clicked();
+#define rowN QString::number(i++).toAscii
 
-public slots:
-    
-};
+/* qFuzzyCompare seems to be too strict */
+bool fuzzyCompare(qreal a, qreal b) {
+    bool ret = fabs(a - b) < 0.1;
+    if (!ret) qDebug() << __FUNCTION__ << ":" << a << "!=" << b;
+    return ret;
+}
 
-#endif // ScreenWidget_H
+
+#endif // TOOL_H

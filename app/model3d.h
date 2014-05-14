@@ -1,7 +1,7 @@
 /****************************************************************************
 * AR Physics Teacher is an augmented reality teaching application
 *
-* Copyright (C) 2012 University of Helsinki
+* Copyright (C) 2012-2014 University of Helsinki
 *
 * Contact: Timo Makimattila <timo.makimattila@primoceler.com>
 *
@@ -32,6 +32,10 @@
 #include <AR/ar.h>
 #include <Qt3D/qglabstractscene.h>
 
+
+#if QT_TESTLIB_LIB
+#define private public
+#endif
 
 /* ARToolkit coordinates & marker info */
 typedef struct {

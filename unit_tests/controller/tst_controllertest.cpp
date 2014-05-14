@@ -73,7 +73,6 @@ private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
     void createModel();
-    void loadConfig();
     void initAR();
 private:
     ImageReader *_fake;
@@ -86,7 +85,7 @@ ControllerTest::ControllerTest()
 
 void ControllerTest::initTestCase() {
     _fake = new FakeImageReader(true);
-    _controller = new Controller(0, _fake, 0);
+    _controller = new Controller(0);
 }
 
 void ControllerTest::cleanupTestCase() {
@@ -96,41 +95,21 @@ void ControllerTest::cleanupTestCase() {
 
 void ControllerTest::createModel()
 {
-    QString modelFile("../models/thermo.3ds");
-    QString patternFile("../markers/marker_a.pat");
+    QString modelFile("models/thermo.3ds");
+    QString patternFile("markers/marker_a.pat");
     qreal angle = 30;
     QVector3D rot(1, 0, 1);
     Model3D *model;
 
     bool ret = false;
 
-    ret = _controller->createModel(modelFile,
-                     patternFile,
-                     angle,
-                     rot,
-                     &model);
+    ret = _controller->createModel(angle, rot, &model, modelFile, "",
+                                   patternFile, "");
 
     QVERIFY(ret == true);
     QVERIFY(model != NULL);
 }
 
-void ControllerTest::loadConfig() {
-    int argc = 1;
-    char *argv = "foobar";
-    QApplication a(argc, &argv);
-
-    QString configDir("../");
-    QString testDir("tests/");
-
-    /* Verify that loadConfig finds a scene (name and image for a button) */
-    QSignalSpy spy(_controller, SIGNAL(newButton(QString&,QString&)));
-    QVERIFY(_controller->_models.size() == 0);
-    QDir::setCurrent(configDir);
-    QVERIFY(_controller->loadConfig() == true);
-    QDir::setCurrent(testDir);
-    QVERIFY(_controller->_models.size() > 0);
-    QVERIFY(spy.count() > 0);
-}
 
 void ControllerTest::initAR() {
 
@@ -138,9 +117,6 @@ void ControllerTest::initAR() {
     char *argv = "foobar";
     QApplication a(argc, &argv);
 
-    QString configDir("../");
-    QString testDir("tests/");
-    QDir::setCurrent(configDir);
     QVERIFY(_controller->initAR() == true);
     _controller->shutdownAR();
 
@@ -148,10 +124,10 @@ void ControllerTest::initAR() {
     delete _controller;
     delete _fake;
     _fake = new FakeImageReader(false);
-    _controller = new Controller(0, _fake);
+    _controller = new Controller(0);
+    _controller->_reader = _fake;
     QVERIFY(_controller->initAR() == false);
     _controller->shutdownAR();
-    QDir::setCurrent(testDir);
 }
 
 

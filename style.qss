@@ -1,9 +1,10 @@
 MainWindow {
-color: #AAAAAA;
+color: white;
 background-color: black;
 }
 
 MenuButton {
+
 font-size: 40pt;
 font-style: bold;
 color: red;
@@ -18,19 +19,18 @@ outline: none;
 
 LanguageButton {
 border-radius: none;
-
 }
 
 ScreenWidget {
 background-color: black;
 }
 
-InfoWidget {
-background-color: #EEEEEE;
-
+QLabel {
+color: white;
+background-color: black;
 }
 
-QLabel {
+QMessageBox {
 color: white;
 background-color: black;
 }

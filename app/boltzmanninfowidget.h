@@ -1,7 +1,7 @@
 /****************************************************************************
 * AR Physics Teacher is an augmented reality teaching application
 *
-* Copyright (C) 2012 University of Helsinki
+* Copyright (C) 2012-2014 University of Helsinki
 *
 * Contact: Timo Makimattila <timo.makimattila@primoceler.com>
 *
@@ -33,9 +33,7 @@ class BoltzmannInfoWidget : public QWidget
 public:
     explicit BoltzmannInfoWidget(QWidget *parent = 0);
     void drawCoords(QPainter *painter);
-    void drawLabels(QPainter *painter);
     void drawChart(QPainter *painter);
-    void drawStatus(QPainter *painter);
 
 protected:
     void paintEvent(QPaintEvent *);

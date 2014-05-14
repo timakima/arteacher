@@ -1,7 +1,7 @@
 /****************************************************************************
 * AR Physics Teacher is an augmented reality teaching application
 *
-* Copyright (C) 2012 University of Helsinki
+* Copyright (C) 2012-2014 University of Helsinki
 *
 * Contact: Timo Makimattila <timo.makimattila@primoceler.com>
 *
@@ -37,13 +37,6 @@ LanguageButton::LanguageButton(QWidget *parent) :
     setBackground();
 }
 
-void LanguageButton::resizeEvent(QResizeEvent *event) {
-    this->setGeometry(parentWidget()->width() - 150,
-                      parentWidget()->height() - 90,
-                      70, 70);
-
-}
-
 void LanguageButton::changeLanguage() {
     QLocale locale;
     QLocale::Language language;
@@ -67,6 +60,7 @@ void LanguageButton::setBackground() {
 }
 
 void LanguageButton::mousePressEvent(QMouseEvent *event) {
+    Q_UNUSED(event);
     QLocale locale;
     if (locale.language() == QLocale::Finnish) {
         setStyleSheet(FINNISH_PRESSED);
@@ -77,6 +71,7 @@ void LanguageButton::mousePressEvent(QMouseEvent *event) {
 
 
 void LanguageButton::mouseReleaseEvent(QMouseEvent *event) {
+    Q_UNUSED(event);
     changeLanguage();
     setBackground();
 }

@@ -1,7 +1,7 @@
 /****************************************************************************
 * AR Physics Teacher is an augmented reality teaching application
 *
-* Copyright (C) 2012 University of Helsinki
+* Copyright (C) 2012-2014 University of Helsinki
 *
 * Contact: Timo Makimattila <timo.makimattila@primoceler.com>
 *
@@ -136,6 +136,8 @@ void ViewportWidget::drawVideoFrame(QGLPainter *painter) {
 
 
 void ViewportWidget::paintGL(QGLPainter *painter) {
+    if (!_models) return;
+
     glEnable(GL_BLEND);
     glEnable (GL_LINE_SMOOTH);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

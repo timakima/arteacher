@@ -8,3 +8,4 @@ SUBDIRS += imagereader markerdetector \
 imagereader.subdir=imagereader
 markerdetector.subdir=markerdetector
 model3d.subdir=model3d
+

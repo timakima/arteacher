@@ -21,13 +21,13 @@ DEFINES += SRCDIR=\\\"$$PWD/\\\"
 HEADERS += ../../app/imagereader.h ../../app/defines.h \
            ../../app/controller.h ../../app/model3d.h \
            ../../app/modelball.h ../../app/markerdetector.h \
-           ../../app/engine.h ../../app/staticinfowidget.h \
+           ../../app/engine.h \
            ../../app/modeldisplay.h ../../app/languageselector.h
 
 SOURCES += ../../app/controller.cpp ../../app/model3d.cpp \
            ../../app/modelball.cpp ../../app/markerdetector.cpp \
             ../../app/imagereader.cpp ../../app/engine.cpp \
-            ../../app/staticinfowidget.cpp ../../app/modeldisplay.cpp \
+            ../../app/modeldisplay.cpp \
             ../../app/languageselector.cpp
 
 DEFINES += SRCDIR=\\\"$$PWD/\\\"
@@ -39,10 +39,12 @@ INCLUDEPATH += ../../app/
 
 
 
-linux-g++* {
+linux* {
+    message("Building for Linux")
     INCLUDEPATH += /usr/include/opencv
-    LIBS += -lcv -lhighgui -lcxcore -lcvaux
     LIBS += -L../../artoolkit/ -lartoolkit
+    LIBS += -lopencv_core -lopencv_highgui -lopencv_imgproc
+    #LIBS += -lcv -lhighgui -lcxcore -lcvaux
 }
 
 # macports

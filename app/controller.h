@@ -1,7 +1,7 @@
 /****************************************************************************
 * AR Physics Teacher is an augmented reality teaching application
 *
-* Copyright (C) 2012 University of Helsinki
+* Copyright (C) 2012-2014 University of Helsinki
 *
 * Contact: Timo Makimattila <timo.makimattila@primoceler.com>
 *
@@ -42,8 +42,7 @@ class Controller : public QObject
 {
     Q_OBJECT
 public:
-    explicit Controller(QObject *parent = 0, ImageReader *reader = 0,
-                        LanguageSelector *languageSelector = 0);
+    explicit Controller(QObject *parent = 0);
     ~Controller();
     /* Creates 3D model and maps it to ARToolkit pattern */
     bool createModel(qreal angle,
@@ -68,13 +67,7 @@ public:
 signals:
     /* Background video image and list of models assosiated with it */
     void setStatus(IplImage *rgb, IplImage *gray, QList<Model3D*> *models);
-
-    /* New menubutton found (placeholder) */
-    void newButton(QString &name, QString &background);
-
-    /* New info widget found */
-    void newInfo(INFO_WIDGET widgetType, QVariant *params,
-                 QObject *sender, char *signal);
+    void refresh(int temp, int velocity);
 
 public slots:
 
@@ -91,11 +84,10 @@ public slots:
     void toggleModel();
 
 private:
-    LanguageSelector *_languageSelector;
     ImageReader *_reader;
     QTimer *_timer;
     MarkerDetector *_detector;
-    ViewportWidget *_gl;
+    LanguageSelector *_languageSelector;
     Engine *_engine;
 };
 

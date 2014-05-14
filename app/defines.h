@@ -1,7 +1,7 @@
 /****************************************************************************
 * AR Physics Teacher is an augmented reality teaching application
 *
-* Copyright (C) 2012 University of Helsinki
+* Copyright (C) 2012-2014 University of Helsinki
 *
 * Contact: Timo Makimattila <timo.makimattila@primoceler.com>
 *
@@ -42,17 +42,16 @@
 
 #define GL_DEFAULT_SCALE 14.0
 
-#define UI_BUTTONS_IN_ROW 3
-
 #define ANIMATION_BALLS 300
 
+#define DEFAULT_TEMP 25.0
 #define MIN_TEMP (-5.0)
 #define MAX_TEMP 99.0
 #define TEMP_RADIUS 250.0
-#define MIN_VELOCITY 325.0
+//#define MIN_VELOCITY 325.0
+#define MIN_VELOCITY 333.0
 #define MAX_VELOCITY 392.0
 #define CELSIUS_STR "\u2103"
-
 
 #define FINNISH_FLAG "border-image: url(graphics/finnish.png);"
 #define FINNISH_PRESSED "border-image: url(graphics/finnish_pressed.png);"

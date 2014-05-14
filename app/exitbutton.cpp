@@ -1,7 +1,7 @@
 /****************************************************************************
 * AR Physics Teacher is an augmented reality teaching application
 *
-* Copyright (C) 2012 University of Helsinki
+* Copyright (C) 2012-2014 University of Helsinki
 *
 * Contact: Timo Makimattila <timo.makimattila@primoceler.com>
 *
@@ -38,19 +38,15 @@ ExitButton::ExitButton(QWidget *parent) :
     setStyleSheet("border-image: url(graphics/exitbutton_red.png);");
 }
 
-void ExitButton::resizeEvent(QResizeEvent *event) {
-    this->setGeometry(parentWidget()->width() - 90,
-                      parentWidget()->height() - 90,
-                      70, 70);
-
-}
 
 void ExitButton::mousePressEvent(QMouseEvent *event) {
     setStyleSheet("border-image: url(graphics/exitbutton_red_pressed.png);");
+    QWidget::mousePressEvent(event);
 }
 
 void ExitButton::mouseReleaseEvent(QMouseEvent *event) {
     setStyleSheet("border-image: url(graphics/exitbutton_red.png);");
+    QWidget::mouseReleaseEvent(event);
     emit clicked();
 }
 

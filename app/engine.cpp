@@ -1,7 +1,7 @@
 /****************************************************************************
 * AR Physics Teacher is an augmented reality teaching application
 *
-* Copyright (C) 2012 University of Helsinki
+* Copyright (C) 2012-2014 University of Helsinki
 *
 * Contact: Timo Makimattila <timo.makimattila@primoceler.com>
 *
@@ -26,7 +26,7 @@
 #include "defines.h"
 
 Engine::Engine(QObject *parent) :
-    QObject(parent), _temp(25.0), _tempDistance(100.0)
+    QObject(parent), _temp(DEFAULT_TEMP), _tempDistance(100.0)
 {
 }
 
@@ -37,7 +37,6 @@ qreal Engine::distance(QMatrix4x4 &a, QMatrix4x4 &b) {
     QVector4D coordC;
 
     coordC = coordA - coordB;
-    //qDebug() << coordC.length();
     return coordC.length();
 }
 
@@ -88,6 +87,12 @@ void Engine::updateTemp(bool coordinateFix) {
     qreal distToStove = distance(tempMat, stoveMat);
 
     qreal thermoTemp = _temp;
+
+    /* Stove, thermo, or fridge missing, can't calculate distance */
+    if (std::isnan(thermoTemp)) {
+        thermoTemp = DEFAULT_TEMP;
+    }
+
     thermoTemp =
             tempInDistance(_tempDistance, distToFridge, thermoTemp,
                            _fridge->temp());
@@ -100,6 +105,7 @@ void Engine::updateTemp(bool coordinateFix) {
     _thermo->setTemp(thermoTemp);
     _balls->setTemp(thermoTemp);
     _display->setTemp(thermoTemp);
+
     emit refreshTemp((int)thermoTemp);
     emit refreshVel((int)particleVel);
     emit refresh(thermoTemp, particleVel);

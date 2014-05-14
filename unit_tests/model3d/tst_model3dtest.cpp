@@ -41,10 +41,10 @@ private Q_SLOTS:
     void loadModel();
     void convertMat();
     void updateCoords();
-    void setters();
 
 private:
     Model3D _model;
+    int _patId;
 };
 
 Model3dTest::Model3dTest()
@@ -62,11 +62,8 @@ void Model3dTest::cleanupTestCase() {
 void Model3dTest::loadModel()
 {
    /* FIXME */
-    QString fileName = "../models/penguin.3ds";
-    _model.loadModel(fileName);
-
-    QGLAbstractScene *scene = _model.scene();
-    QVERIFY(scene != NULL);
+    QString fileName = "models/blank.3ds";
+    QVERIFY(_model.addModel(fileName, "markers/marker_a.pat"));
     QGLSceneNode *node = _model.mainNode();
     QVERIFY(node != NULL);
 }
@@ -118,11 +115,10 @@ void Model3dTest::updateCoords() {
     memset(transMat, 0, 16 * sizeof(qreal));
     memset(expTransMat, 0, 16 * sizeof(qreal));
 
-    QGLAbstractScene *scene = _model.scene();
-    QGLSceneNode *mainNode = scene->mainNode();
+    QGLSceneNode *mainNode = _model.mainNode();
     QVERIFY(mainNode != NULL);
     coordinates_t *coords;
-    QVERIFY(_model.coordPtr(&coords) == true);
+    coords = _model.coordPtr(_patId);
     double trans[3][4];
     trans[0][0] = 0.10;
     trans[0][1] = 0.15;
@@ -146,33 +142,6 @@ void Model3dTest::updateCoords() {
 }
 
 
-void Model3dTest::setters() {
-    QString name("narf");
-    QString pattern("../markers/marker_a.pat");
-    qreal scale = 13.4;
-
-    _model.setName(name);
-    _model.setPattern(pattern);
-    _model.setVisible(true);
-
-    _model.setScale(scale);
-    QCOMPARE(_model.scale(), scale);
-
-    QCOMPARE(name, _model.name());
-    QVERIFY(_model.id() != -1);
-    QVERIFY(_model.visible() == true);
-    _model.setVisible(false);
-    QVERIFY(_model.visible() == false);
-
-    _model.setTemp(10.0);
-    QCOMPARE(_model.temp(), 10.0);
-
-    QMatrix4x4 mat(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
-    _model.setTransMat(mat);
-    QMatrix4x4 retMat = _model.transMat();
-    QCOMPARE(mat, retMat);
-
-}
 
 QTEST_APPLESS_MAIN(Model3dTest)
 

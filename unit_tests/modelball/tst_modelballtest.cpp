@@ -43,7 +43,6 @@ public slots:
 private Q_SLOTS:
     void createScene();
     void transMat();
-    void createTimeLine();
     void scaleTemp_data();
     void scaleTemp();
 private:
@@ -65,16 +64,6 @@ void ModelballTest::transMat() {
     QMatrix4x4 trans = _ball.transMat();
 }
 
-void ModelballTest::createTimeLine() {
-    QTimeLine *timeLine;
-
-    timeLine = _ball.createTimeLine(100, 0,
-                         1,
-                         10,
-                         QTimeLine::LinearCurve,
-                         SLOT(rotateSceneX(int)));
-    QVERIFY(timeLine != NULL);
-}
 
 void ModelballTest::scaleTemp_data() {
     QTest::addColumn<qreal>("temp");
