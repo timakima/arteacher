@@ -5,7 +5,8 @@
 #-------------------------------------------------
 
 TEMPLATE = subdirs
-SUBDIRS += artoolkit app 
+SUBDIRS += artoolkit app
+
 app.depends=artoolkit
 
 TRANSLATIONS += areality_fi.ts areality_en.ts

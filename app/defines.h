@@ -42,7 +42,7 @@
 
 #define GL_DEFAULT_SCALE 14.0
 
-#define ANIMATION_BALLS 300
+#define ANIMATION_BALLS 100
 
 #define DEFAULT_TEMP 25.0
 #define MIN_TEMP (-5.0)

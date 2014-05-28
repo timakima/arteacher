@@ -27,8 +27,6 @@
 
 #include <QObject>
 #include <QString>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
 #include <AR/ar.h>
 #include <Qt3D/qglabstractscene.h>
 
@@ -45,6 +43,8 @@ typedef struct {
     double markerCenter[2];
     double vertex[2][4];
 } coordinates_t;
+
+class QGLMaterial;
 
 /* Representation of a 3D model containing
    transformation matrix and corresponding marker data */

@@ -38,25 +38,18 @@
 #define SHININESS 99
 
 ModelBall::ModelBall(QObject *parent) :
-    Model3D(parent), _animationTimer(new QTimer(this))
+    Model3D(parent), _animationTimer(new QTimer(this)), _frame(0)
 {
-    _scale = 2.0;
+    const float defaultScale = 2.0;
+    const int interval = 10;
+    _scale = defaultScale;
     createScene();
-
-    _animationTimer->setInterval(10);
+    _animationTimer->setInterval(interval);
     _animationTimer->setSingleShot(true);
     connect(_animationTimer, SIGNAL(timeout()),
             this, SLOT(animate()));
 }
 
-
-qreal ModelBall::tempScale() {
-    Q_ASSERT(MAX_TEMP != MIN_TEMP);
-    qreal shift = _temp - MIN_TEMP + 0.1;
-    qreal range = MAX_TEMP - MIN_TEMP;
-    qreal scale = shift / range;
-    return scale;
-}
 
 /* Give a random position inside given scale */
 double ModelBall::randomPosition(int seed) {
@@ -73,21 +66,29 @@ double ModelBall::randomPosition(int seed) {
 
 
 /* Creates an individual randomly positioned ball */
-void ModelBall::createNode(QGLBuilder &builder, QGLMaterial *material) {
-
+QGLSceneNode *ModelBall::createNode(QGLMaterial *material) {
+    const float defaultSize = 1.0;
+    const float positionX = -1.5;
+    const float positionY = 40.0;
+    const float randomPositionScale = 1000.0;
+    QGLBuilder builder;
+    QGLSceneNode *node;
     builder.newNode();
-    builder << QGLSphere(1.0);
-    builder.currentNode()->setPosition(QVector3D(randomPosition(),
-                                                 randomPosition(),
-                                                 randomPosition()));
-
-    builder.currentNode()->setMaterial(material);
-    builder.currentNode()->setEffect(QGL::LitMaterial);
+    builder << QGLSphere(defaultSize);
+    node = builder.finalizedSceneNode();
+    node->setMaterial(material);
+    node->setEffect(QGL::LitMaterial);
     QGraphicsTranslation3D *trans = new QGraphicsTranslation3D();
-    trans->setTranslate(QVector3D(1.0, 1.0, 1.0));
-    builder.currentNode()->addTransform(trans);
-    _translations.append(trans);
-
+    node->addTransform(trans);
+    QGraphicsTranslation3D *transStart = new QGraphicsTranslation3D();
+    QVector3D *randomStart = new QVector3D(positionX +
+                                           randomPosition()/randomPositionScale,
+                                           positionY +
+                                           randomPosition()/randomPositionScale,
+                                           randomPosition()/randomPositionScale);
+    transStart->setTranslate(*randomStart);
+    node->addTransform(transStart);
+    return node;
 }
 
 /* Creates the scene of balls */
@@ -99,34 +100,20 @@ void ModelBall::createScene() {
     material->setAmbientColor(QColor(AMBIENT_COLOR));
     material->setEmittedLight(QColor(EMITTED_LIGHT_COLOR));
     material->setShininess(SHININESS);
-
-    QGLBuilder builder;
-
     for (int i = 0; i < ANIMATION_BALLS; i++) {
-        createNode(builder, material);
-        _transTable[i] = qrand() % 100;
+        _nodes.append(createNode(material));
+        _phase[i] = 2 * M_PI / ANIMATION_BALLS * i - M_PI;
     }
-
-    _mainNode = builder.finalizedSceneNode();
-    _mainNode->setMaterial(material);
-    _rot.setAngle(0.0f);
-    _rot.setAxis(QVector3D(0, 0, 1));
-    Model3D *parent = (Model3D*)this->parent();
-    if (parent) {
-        _trans.setTranslate(QVector3D(-0.3 * parent->scale() / 10,
-                                      parent->scale() * 1.2, 0.0f));
-    }
-    _mainNode->addTransform(&_rot);
-    _mainNode->addTransform(&_trans);
-
+    _mainNode = _nodes.first();
 }
 
-QGLSceneNode *ModelBall::mainNode() {
+QGLSceneNode *ModelBall::mainNode(int markerId) {
+    Q_UNUSED(markerId);
     return _mainNode;
 }
 
 void ModelBall::draw(QGLPainter *painter) {
-    if (!visible()) {
+    if (parent() && !visible()) {
         return;
     }
 
@@ -134,41 +121,80 @@ void ModelBall::draw(QGLPainter *painter) {
     painter->modelViewMatrix().push();
     painter->modelViewMatrix() = transMat();
     painter->modelViewMatrix().scale(scale());
-    _mainNode->draw(painter);
+    foreach(QGLSceneNode *node, _nodes) {
+        node->draw(painter);
+    }
     painter->modelViewMatrix().pop();
     painter->projectionMatrix().pop();
 }
 
 
+void ModelBall::animateBall(QGLSceneNode *node, int index, float  scale,
+                            float dimension)
+{
+    if (node && !node->transforms().isEmpty() &&
+            index >= 0 && index < ANIMATION_BALLS) {
+        /* Each ball has an individual phase */
+        _phase[index] += _frame;
+        if (_phase[index] >  M_PI) {
+            _phase[index] -= (2 * M_PI);
+        }
+        QGraphicsTranslation3D *trans =
+                qobject_cast<QGraphicsTranslation3D*>
+                (node->transforms().first());
+        QVector3D vec = trans->translate();
+
+        /* Fluff to randomize movement */
+        float x = vec.x() + sin(_phase[index] * qrand()) / scale - sin(qrand()) / scale;
+        float y = vec.y() + cos(_phase[index] * qrand()) / scale - sin(qrand()) / scale;
+        float z = vec.z() + sin(_phase[index] * qrand()) / scale - cos(qrand()) / scale;
+
+        /* Balls are supposed to drift from origo to temperature scaled
+           dimension, then move back to origo again */
+        if (qSqrt(x*x + y*y + z*z) > dimension) {
+            x = 0.0;
+            y = 0.0;
+            z = 0.0;
+        }
+
+        vec.setX(x);
+        vec.setY(y);
+        vec.setZ(z);
+        trans->setTranslate(vec);
+    }
+}
+
 /* Animates the scene and balls */
 void ModelBall::animate() {
-    /* Scale according to temperature */
-    _tempScale = tempScale() * 3.0 + 0.1;
+    const float minimumScale = 1.0;
+    const float minimumDimension = 8.0;
+    const float maximumDimension = 10.0;
+    const float minimumMovement = 0.001;
+    float scale;
+    float temperature;
+    float dimension;
 
-    /* This is basicly nonsense that randomizes individual ball movement */
-    qreal x;
-    qreal y;
-    qreal z;
-    int i = 0;
-    QListIterator<QGraphicsTranslation3D*> balls(_translations);
-    while (balls.hasNext()) {
-        x = randomPosition();
-        y = randomPosition();
-        z = randomPosition();
-
-        QGraphicsTranslation3D *trans = balls.next();
-        QVector3D trvec(x,
-                        y,
-                        z);
-        trvec *= _tempScale * 3.0 + 10; // Linear scaling according to temp
-        trans->setTranslate(trvec);
-        i++;
+    /* Go through the whole 2 * Pi (=360 degrees) for the animation */
+    _frame +=  (_temp - MIN_TEMP) / (MAX_TEMP - MIN_TEMP);
+    if (_frame > M_PI) {
+        _frame -= 2 * M_PI;
     }
 
-    // Ball movement is not linear, but makes the point better when
-    // there's a huge velocity difference between room-, fridge- and stove temps
-    int interval = qSqrt(MAX_TEMP - _temp) * 5;
-    _animationTimer->setInterval(interval);
+    /* Temperature scale for individual ball movement */
+    (_temp != MIN_TEMP) ? temperature = _temp + minimumMovement :
+            temperature = minimumMovement;
+    scale =  (MAX_TEMP - MIN_TEMP) / (temperature - MIN_TEMP) + minimumScale;
+
+    /* Maximum dimension for the animation depends of the temperature,
+       but has a reasonable minimum value */
+    dimension = (_temp - MIN_TEMP) / (MAX_TEMP - MIN_TEMP)
+            * maximumDimension + minimumDimension;
+
+    int i = 0;
+    foreach(QGLSceneNode *node, _nodes) {
+        animateBall(node, i, scale, dimension);
+        i++;
+    }
     _animationTimer->start();
 }
 
